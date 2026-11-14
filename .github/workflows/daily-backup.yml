@@ -48,8 +48,11 @@ jobs:
             exit 1
           fi
 
+          # Percent-encode any literal spaces in the connection URI to prevent pg_dump URI parser errors
+          CLEAN_DB_URL=$(echo "$DB_URL" | sed 's/ /%20/g')
+
           echo "Initiating pg_dump against Supabase PostgreSQL database..."
-          pg_dump "$DB_URL" \
+          pg_dump "$CLEAN_DB_URL" \
             --clean \
             --if-exists \
             --no-owner \
