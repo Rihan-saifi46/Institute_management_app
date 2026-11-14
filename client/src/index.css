@@ -28,3 +28,42 @@
   background: #94a3b8;
 }
 
+/* Print Stylesheet for Fee Receipts */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide navigation, sidebar, headers, and modals during printing */
+  header,
+  aside,
+  nav,
+  button,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Isolate printable receipt card */
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-receipt-card,
+  #printable-receipt-card * {
+    visibility: visible;
+  }
+
+  #printable-receipt-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1.5cm !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

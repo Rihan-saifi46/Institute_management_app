@@ -135,3 +135,4 @@ export const DeleteStudentModal: React.FC<DeleteStudentModalProps> = ({
     </div>
   );
 };
+

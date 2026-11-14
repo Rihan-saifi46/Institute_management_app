@@ -22,3 +22,4 @@ describe('Phase 4 Student Management Components', () => {
     expect(typeof StudentsPage).toBe('function');
   });
 });
+
