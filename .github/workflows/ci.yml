@@ -1,0 +1,46 @@
+name: Continuous Integration & Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    name: Test, TypeCheck & Build Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Run Vitest Automated Test Suite
+        run: npm test
+
+      - name: Run TypeScript Strict Type Check
+        run: npx tsc --noEmit
+
+      - name: Verify Vite Production Build
+        run: npm run build
+
+      - name: Verify Cloudflare Pages Redirects & Headers
+        run: |
+          test -f dist/_redirects || (echo "dist/_redirects is missing!" && exit 1)
+          test -f dist/_headers || (echo "dist/_headers is missing!" && exit 1)
+          echo "Cloudflare Pages deployment artifacts verified."
