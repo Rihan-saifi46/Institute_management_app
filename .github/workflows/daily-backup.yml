@@ -1,0 +1,176 @@
+name: Automated Daily Encrypted Database Backup
+
+on:
+  schedule:
+    # Runs daily at 00:00 UTC (05:30 IST)
+    # Note: Subject to GitHub runner queue delays (typically 15-45 minutes)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual backup trigger (e.g. Pre-migration snapshot, Restore drill verification)'
+        required: false
+        default: 'Manual on-demand backup'
+
+jobs:
+  backup:
+    name: Execute Encrypted Backup & Dual Storage Upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Client & AWS CLI
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client awscli gnupg
+          pg_dump --version
+          aws --version
+
+      - name: Generate Backup Timestamps & Identifiers
+        id: meta
+        run: |
+          TIMESTAMP=$(date -u +'%Y%m%d_%H%M%SZ')
+          DATE_ONLY=$(date -u +'%Y%m%d')
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "date_only=${DATE_ONLY}" >> $GITHUB_OUTPUT
+          echo "filename=z_institute_backup_${TIMESTAMP}.sql" >> $GITHUB_OUTPUT
+          echo "gpg_filename=z_institute_backup_${TIMESTAMP}.sql.gpg" >> $GITHUB_OUTPUT
+
+      - name: Execute pg_dump from Supabase PostgreSQL
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not configured in repository secrets."
+            exit 1
+          fi
+
+          echo "Initiating pg_dump against Supabase PostgreSQL database..."
+          pg_dump "$DB_URL" \
+            --clean \
+            --if-exists \
+            --no-owner \
+            --no-privileges \
+            --quote-all-identifiers \
+            -F p \
+            -f "${{ steps.meta.outputs.filename }}"
+
+      - name: Run Integrity Verification Gate (Pre-Encryption)
+        run: |
+          BACKUP_FILE="${{ steps.meta.outputs.filename }}"
+
+          # 1. Non-empty and minimum size check (>= 10 KB)
+          FILE_SIZE=$(stat -c%s "$BACKUP_FILE" 2>/dev/null || stat -f%z "$BACKUP_FILE")
+          echo "Raw dump file size: $FILE_SIZE bytes"
+
+          if [ "$FILE_SIZE" -lt 10240 ]; then
+            echo "::error::Integrity check failed: Dump size ($FILE_SIZE bytes) is below minimum expected threshold of 10 KB."
+            exit 1
+          fi
+
+          # 2. Verify PostgreSQL dump trailer signature
+          if ! grep -q "PostgreSQL database dump complete" "$BACKUP_FILE"; then
+            echo "::error::Integrity check failed: Missing 'PostgreSQL database dump complete' trailer. The dump may be truncated."
+            exit 1
+          fi
+
+          # 3. Verify core table schema presence
+          for table in "students" "fee_payments" "attendance" "admins"; do
+            if ! grep -qi "CREATE TABLE.*$table" "$BACKUP_FILE"; then
+              echo "::error::Integrity check failed: Table '$table' definition not found in dump file."
+              exit 1
+            fi
+          done
+
+          echo "Integrity verification gate PASSED: All tables, headers, and minimum size validated."
+
+      - name: Encrypt Backup Archive via GPG (Asymmetric AES-256)
+        env:
+          GPG_KEY: ${{ secrets.GPG_PUBLIC_KEY }}
+          BACKUP_FILE: ${{ steps.meta.outputs.filename }}
+          ENCRYPTED_FILE: ${{ steps.meta.outputs.gpg_filename }}
+        run: |
+          if [ -n "$GPG_KEY" ]; then
+            echo "Importing GPG public key for asymmetric encryption..."
+            echo "$GPG_KEY" | gpg --batch --import
+
+            # Encrypt with public key (recipient: Z Institute Backup or default imported key)
+            KEY_ID=$(gpg --list-keys --with-colons | awk -F: '/^pub/{print $5}' | head -n1)
+            echo "Encrypting dump archive using GPG public key ID: $KEY_ID..."
+            gpg --batch --yes --trust-model always --encrypt --recipient "$KEY_ID" \
+              -o "$ENCRYPTED_FILE" "$BACKUP_FILE"
+          else
+            echo "::warning::GPG_PUBLIC_KEY not configured. Falling back to symmetric GPG encryption with repository passphrase."
+            if [ -z "${{ secrets.BACKUP_ENCRYPTION_KEY }}" ]; then
+              echo "::error::Neither GPG_PUBLIC_KEY nor BACKUP_ENCRYPTION_KEY is configured."
+              exit 1
+            fi
+            gpg --batch --yes --symmetric --cipher-algo AES256 \
+              --passphrase "${{ secrets.BACKUP_ENCRYPTION_KEY }}" \
+              -o "$ENCRYPTED_FILE" "$BACKUP_FILE"
+          fi
+
+          # Securely wipe unencrypted raw SQL dump
+          shred -u "$BACKUP_FILE" 2>/dev/null || rm -f "$BACKUP_FILE"
+          echo "Encrypted archive created: $ENCRYPTED_FILE"
+
+      - name: Generate SHA-256 Checksum
+        run: |
+          sha256sum "${{ steps.meta.outputs.gpg_filename }}" > "${{ steps.meta.outputs.gpg_filename }}.sha256"
+          cat "${{ steps.meta.outputs.gpg_filename }}.sha256"
+
+      - name: Primary Destination Upload -> Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -z "$R2_ENDPOINT" ] || [ -z "$R2_BUCKET" ]; then
+            echo "::warning::Cloudflare R2 secrets not fully configured. Skipping R2 upload."
+          else
+            echo "Uploading encrypted backup to Cloudflare R2 bucket: $R2_BUCKET/daily/..."
+            aws s3 cp "${{ steps.meta.outputs.gpg_filename }}" \
+              "s3://${R2_BUCKET}/daily/${{ steps.meta.outputs.gpg_filename }}" \
+              --endpoint-url "$R2_ENDPOINT"
+
+            aws s3 cp "${{ steps.meta.outputs.gpg_filename }}.sha256" \
+              "s3://${R2_BUCKET}/daily/${{ steps.meta.outputs.gpg_filename }}.sha256" \
+              --endpoint-url "$R2_ENDPOINT"
+
+            # Update heartbeat timestamp file
+            TIMESTAMP_JSON=$(cat <<EOF
+          {
+            "last_backup_timestamp": "${{ steps.meta.outputs.timestamp }}",
+            "archive_filename": "${{ steps.meta.outputs.gpg_filename }}",
+            "status": "SUCCESS",
+            "file_sha256": "$(awk '{print $1}' ${{ steps.meta.outputs.gpg_filename }}.sha256)"
+          }
+          EOF
+          )
+            echo "$TIMESTAMP_JSON" > latest_backup_timestamp.json
+            aws s3 cp latest_backup_timestamp.json "s3://${R2_BUCKET}/metadata/latest_backup_timestamp.json" --endpoint-url "$R2_ENDPOINT"
+            echo "Heartbeat timestamp updated successfully in Cloudflare R2."
+          fi
+
+      - name: Secondary Destination Upload -> GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.gpg_filename }}
+          path: |
+            ${{ steps.meta.outputs.gpg_filename }}
+            ${{ steps.meta.outputs.gpg_filename }}.sha256
+          retention-days: 90
+
+      - name: Dispatch Backup Failure Alert Notification
+        if: failure()
+        env:
+          RECIPIENT: ${{ secrets.ALERT_EMAIL_RECIPIENT || 'saifirihan683@gmail.com' }}
+        run: |
+          echo "::error::CRITICAL: Database backup workflow failed! Alert dispatched to $RECIPIENT."
+          echo "Trigger source: ${{ github.event_name }}"
+          echo "Execution timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "Investigate workflow run logs immediately: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

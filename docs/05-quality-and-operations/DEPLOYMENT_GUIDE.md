@@ -51,13 +51,14 @@ The application deploys across two cloud services with an independent disaster r
    git remote add origin git@github.com:<your-user>/institute-app.git
    git push -u origin main
    ```
-2. In GitHub repository $\rightarrow$ **Settings > Secrets and variables > Actions**, add the following encrypted repository secrets:
-   - `SUPABASE_DB_URL`: Direct PostgreSQL connection string.
-   - `BACKUP_ENCRYPTION_KEY`: A strong, randomly generated 32+ character passphrase for GPG AES-256 encryption.
+2. In GitHub repository $\rightarrow$ **Settings > Secrets and variables > Actions**, add the following repository secrets:
+   - `SUPABASE_DB_URL`: Direct PostgreSQL connection string (`postgresql://postgres:[PASSWORD]@db.rununbjiqblmlttdmgxu.supabase.co:5432/postgres`).
+   - `GPG_PUBLIC_KEY`: Asymmetric public GPG key (preferred) for zero-cloud-decryption security, OR `BACKUP_ENCRYPTION_KEY` (AES-256 passphrase).
    - `R2_ACCESS_KEY_ID`: Cloudflare R2 Access Key ID.
    - `R2_SECRET_ACCESS_KEY`: Cloudflare R2 Secret Access Key.
-   - `R2_BUCKET_NAME`: `institute-backups-prod`.
+   - `R2_BUCKET_NAME`: `z-institute-backups-prod`.
    - `R2_ENDPOINT`: `https://<account-id>.r2.cloudflarestorage.com`.
+   - `ALERT_EMAIL_RECIPIENT`: `saifirihan683@gmail.com`.
 
 ---
 
@@ -70,10 +71,11 @@ The application deploys across two cloud services with an independent disaster r
    - **Build Output Directory:** `dist`
    - **Root Directory:** `client`
 4. Configure Environment Variables in Cloudflare Pages:
-   - `VITE_SUPABASE_URL`: `https://<project-ref>.supabase.co`
+   - `VITE_SUPABASE_URL`: `https://rununbjiqblmlttdmgxu.supabase.co`
    - `VITE_SUPABASE_ANON_KEY`: `<your-public-anon-key>`
 5. Click **"Save and Deploy"**.
 6. Cloudflare Pages builds and assigns your live URL: `https://institute-app.pages.dev`.
+7. SPA client-side routing is handled automatically by `dist/_redirects`, and HTTP security headers are enforced via `dist/_headers`.
 
 ---
 
@@ -81,10 +83,12 @@ The application deploys across two cloud services with an independent disaster r
 
 1. [ ] Navigate to `https://institute-app.pages.dev` in an incognito window.
 2. [ ] Confirm SSL certificate displays a valid lock icon.
-3. [ ] Log in with initial Super Admin credentials.
+3. [ ] Log in with initial Super Admin credentials (`saifirihan683@gmail.com`).
 4. [ ] Perform a test student admission, record a test fee payment, and test print the receipt.
-5. [ ] Navigate to GitHub $\rightarrow$ **Actions** $\rightarrow$ Trigger the `daily-backup.yml` workflow manually via "Run workflow".
-6. [ ] Confirm that encrypted `.sql.gpg` archive is uploaded to Cloudflare R2 and GitHub Releases.
+5. [ ] Navigate to Batch Attendance, mark attendance for today, and test Present/Absent filter tabs.
+6. [ ] Click "Export" in header and test downloading the Full System JSON and Students CSV backup files.
+7. [ ] Navigate to GitHub $\rightarrow$ **Actions** $\rightarrow$ Trigger the `daily-backup.yml` workflow manually via "Run workflow".
+8. [ ] Confirm that encrypted `.sql.gpg` archive is uploaded to Cloudflare R2 and GitHub Artifacts.
 
 ---
 
