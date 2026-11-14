@@ -94,9 +94,10 @@
 - [x] Assemble `AttendancePage` managing date state, atomic RPC save, and auto-refresh.
 - [x] Wire `AttendancePage` route into `App.tsx` at `/attendance`.
 - [x] Verify zero TypeScript errors and 100% test success across all 31 tests.
-- [x] Build responsive `<DashboardLayout>` with collapsible desktop sidebar and mobile overlay drawer.
-- [x] Build top `<Header>` with institute title, user role badge, and sign-out action.
-- [x] Build `<Sidebar>` with active link indicators and module navigation links.
-- [x] Build `<Login>` page with email/password validation and error alerting.
-- [x] Build `<DashboardOverview>` home view with module cards and security status cards.
-- [x] Verify production compilation (`vite build`) and test suite (26/26 tests PASS).
+
+### Phase 7: Testing, Backup Pipeline & Production Deployment
+- [ ] Build automated daily backup workflow (`.github/workflows/daily-backup.yml`) with GPG asymmetric encryption and dual-storage (Cloudflare R2 + GitHub Artifacts/Releases).
+- [ ] Configure GitHub repository secrets and notification email dispatch (`saifirihan683@gmail.com`).
+- [ ] Conduct and document mandatory restore verification drill (`docs/05-operations/RESTORE_DRILL_REPORT.md`).
+- [ ] Deploy React application to Cloudflare Pages via GitHub CI/CD with production environment variables.
+- [ ] Perform live post-deployment smoke test and end-to-end audit.
