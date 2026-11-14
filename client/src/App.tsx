@@ -11,8 +11,7 @@ import { Login } from './pages/Login';
 import { DashboardOverview } from './pages/DashboardOverview';
 import { StudentsPage } from './pages/StudentsPage';
 import { FeesPage } from './pages/FeesPage';
-import { ModulePlaceholder } from './pages/ModulePlaceholder';
-import { CalendarCheck } from 'lucide-react';
+import { AttendancePage } from './pages/AttendancePage';
 
 export const App: React.FC = () => {
   return (
@@ -28,17 +27,7 @@ export const App: React.FC = () => {
               <Route path="/" element={<DashboardOverview />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/fees" element={<FeesPage />} />
-              <Route
-                path="/attendance"
-                element={
-                  <ModulePlaceholder
-                    title="Batch Attendance Management"
-                    description="Daily batch attendance sheet, instant present defaulting, review before submission, and atomic database upserts."
-                    targetPhase="Phase 6"
-                    icon={CalendarCheck}
-                  />
-                }
-              />
+              <Route path="/attendance" element={<AttendancePage />} />
             </Route>
           </Route>
 
