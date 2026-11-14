@@ -51,7 +51,18 @@ erDiagram
   - If an administrative user accidentally attempts to delete the student from the database, PostgreSQL **aborts the transaction and rejects the deletion**.
   - To deactivate a student who has payments, the administrator must change their `status` to `'dropped'` or `'completed'`. The student record and all historical receipts remain intact for accounting audits.
 
-### 2.2 `fee_payments` $\rightarrow$ `fee_payments` (Self-Referential Reversal, 1-to-1)
+### 2.2 `students` $\rightarrow$ `attendance` (1-to-Many)
+* **Cardinality:** One student has zero, one, or many daily attendance logs ($1 : N$).
+* **Constraint:**
+  ```sql
+  FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE RESTRICT
+  ```
+* **Integrity Rationale (`ON DELETE RESTRICT`):**
+  - Accidental student deletion is blocked if attendance history exists.
+  - Guarantees historical educational attendance records are never inadvertently purged.
+  - Only newly added students with **zero attendance and zero payments** can be physically deleted if created by mistake.
+
+### 2.3 `fee_payments` $\rightarrow$ `fee_payments` (Self-Referential Reversal, 1-to-1)
 * **Cardinality:** An original payment record may have at most one corresponding reversal record ($1 : 0..1$).
 * **Constraint:**
   ```sql
@@ -60,15 +71,7 @@ erDiagram
 * **Integrity Rationale (`ON DELETE RESTRICT`):**
   - Prevents breaking the audit link between an original payment and its offsetting void entry.
   - An original payment that has been reversed cannot be detached from its reversal entry.
-
-### 2.3 `students` $\rightarrow$ `attendance` (1-to-Many)
-* **Cardinality:** One student has zero, one, or many daily attendance logs ($1 : N$).
-* **Constraint:**
-  ```sql
-  FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE
-  ```
-* **Integrity Rationale (`ON DELETE CASCADE`):**
-  - If a student was added by mistake (e.g. duplicate data entry on the same day) and has **zero** fee payments, deleting the student automatically cleans up any transient attendance records, preventing orphaned attendance logs.
+  - Unique partial index `unique_payment_reversal_idx` guarantees an original payment can only be reversed once.
 
 ### 2.4 `auth.users` $\rightarrow$ `public.admins` (1-to-1)
 * **Cardinality:** Each `public.admins` record corresponds to exactly one authenticated Supabase Auth identity ($1 : 1$).
@@ -90,5 +93,5 @@ To guarantee compliance with financial auditing and historical educational recor
 | **Active Enrollment** | `status = 'active'` | Mark attendance, record payments, print receipts. |
 | **Course Completed** | `status = 'completed'` | Excluded from daily attendance sheet; payment history permanently preserved. |
 | **Course Abandoned / Dropped** | `status = 'dropped'` | Excluded from daily attendance sheet; outstanding dues & payments preserved. |
-| **Accidental Entry (Zero Payments)** | `DELETE FROM students WHERE id = ...` | Allowed; cascades transient attendance logs cleanly. |
-| **Student with Payment History** | `DELETE FROM students WHERE id = ...` | **BLOCKED BY DATABASE** (`ON DELETE RESTRICT`). Must use status change instead. |
+| **Accidental Entry (Zero History)** | `DELETE FROM students WHERE id = ...` | Allowed only if student has zero payments and zero attendance. |
+| **Student with Payment or Attendance History** | `DELETE FROM students WHERE id = ...` | **BLOCKED BY DATABASE** (`ON DELETE RESTRICT`). Must use status change instead. |

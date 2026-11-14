@@ -16,7 +16,7 @@ Authentication is handled via **Supabase Auth** (built on GoTrue), issuing crypt
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Admin as Institute Manager
+    actor Admin as Institute Manager / Owner
     participant UI as React Frontend (Cloudflare Pages)
     participant Auth as Supabase Auth (GoTrue)
     participant DB as Supabase PostgreSQL + PostgREST
@@ -31,7 +31,7 @@ sequenceDiagram
     Note over UI,DB: Authenticated Query Execution
     UI->>DB: supabase.from('students').select('*') (Header: Bearer <JWT>)
     DB->>DB: PostgREST extracts JWT claim: auth.uid()
-    DB->>DB: Evaluates RLS Policy against public.admins
+    DB->>DB: Evaluates RLS Policy against public.admins (role: super_admin / manager)
     DB-->>UI: Returns authorized records only
 ```
 
@@ -42,50 +42,77 @@ sequenceDiagram
 All operational tables have `ROW LEVEL SECURITY` enabled. Access is denied by default to all callers unless an explicit policy grants access:
 
 ```sql
--- Enable RLS across all tables
+-- Enable RLS across all operational tables
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fee_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 
 -- 1. ADMINS TABLE POLICIES
-CREATE POLICY "Admins can view all admin records" ON public.admins
-    FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid()));
+CREATE POLICY "Admins can view admin profiles" 
+ON public.admins FOR SELECT TO authenticated 
+USING (public.is_authorized_admin());
 
-CREATE POLICY "Super admin can manage admin profiles" ON public.admins
-    FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid() AND role = 'super_admin'))
-    WITH CHECK (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid() AND role = 'super_admin'));
+CREATE POLICY "Super admin can insert admin profiles" 
+ON public.admins FOR INSERT TO authenticated 
+WITH CHECK (public.is_super_admin());
+
+CREATE POLICY "Super admin can update admin profiles" 
+ON public.admins FOR UPDATE TO authenticated 
+USING (public.is_super_admin())
+WITH CHECK (public.is_super_admin());
+
+CREATE POLICY "Super admin can delete other admin profiles" 
+ON public.admins FOR DELETE TO authenticated 
+USING (public.is_super_admin() AND user_id != auth.uid());
 
 -- 2. STUDENTS TABLE POLICIES
-CREATE POLICY "Admins full operational access to students" ON public.students
-    FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid()))
-    WITH CHECK (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid()));
+CREATE POLICY "Admins can view students" 
+ON public.students FOR SELECT TO authenticated 
+USING (public.is_authorized_admin());
 
--- 3. ATTENDANCE TABLE POLICIES
-CREATE POLICY "Admins full operational access to attendance" ON public.attendance
-    FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid()))
-    WITH CHECK (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid()));
+CREATE POLICY "Admins can insert students" 
+ON public.students FOR INSERT TO authenticated 
+WITH CHECK (public.is_authorized_admin());
 
--- 4. FEE PAYMENTS TABLE: IMMUTABLE AUDIT POLICIES
--- Anyone authenticated as an admin can read payments
-CREATE POLICY "Admins can view payment ledger" ON public.fee_payments
-    FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid()));
+CREATE POLICY "Admins can update students" 
+ON public.students FOR UPDATE TO authenticated 
+USING (public.is_authorized_admin())
+WITH CHECK (public.is_authorized_admin());
 
--- Admins can insert standard installment payments (non-reversals)
-CREATE POLICY "Admins can record regular payments" ON public.fee_payments
-    FOR INSERT TO authenticated
-    WITH CHECK (
-        EXISTS (SELECT 1 FROM public.admins WHERE user_id = auth.uid())
-        AND is_reversal = false
-    );
+CREATE POLICY "Super admin can delete students without history" 
+ON public.students FOR DELETE TO authenticated 
+USING (public.is_super_admin());
 
--- STRICT INVARIANT: NO UPDATE OR DELETE POLICIES EXIST FOR fee_payments
--- Any attempt to UPDATE or DELETE rows in fee_payments is blocked by PostgreSQL
+-- 3. FEE PAYMENTS TABLE: IMMUTABLE AUDIT POLICIES
+CREATE POLICY "Admins can view payment ledger" 
+ON public.fee_payments FOR SELECT TO authenticated 
+USING (public.is_authorized_admin());
+
+CREATE POLICY "Admins can record regular payments" 
+ON public.fee_payments FOR INSERT TO authenticated 
+WITH CHECK (public.is_authorized_admin() AND is_reversal = false);
+
+-- STRICT INVARIANT: ZERO UPDATE OR DELETE POLICIES ARE CREATED FOR fee_payments
+-- Direct SQL UPDATE and DELETE statements are unconditionally blocked by RLS for all users.
+
+-- 4. ATTENDANCE TABLE POLICIES
+CREATE POLICY "Admins can view attendance" 
+ON public.attendance FOR SELECT TO authenticated 
+USING (public.is_authorized_admin());
+
+CREATE POLICY "Admins can insert attendance" 
+ON public.attendance FOR INSERT TO authenticated 
+WITH CHECK (public.is_authorized_admin());
+
+CREATE POLICY "Admins can update attendance" 
+ON public.attendance FOR UPDATE TO authenticated 
+USING (public.is_authorized_admin())
+WITH CHECK (public.is_authorized_admin());
+
+CREATE POLICY "Super admin can delete attendance" 
+ON public.attendance FOR DELETE TO authenticated 
+USING (public.is_super_admin());
 ```
 
 ---
@@ -99,7 +126,7 @@ CREATE POLICY "Admins can record regular payments" ON public.fee_payments
   - The Supabase `service_role` key bypasses all Row Level Security.
   - **Rule:** The `service_role` key is **strictly forbidden** from appearing in frontend code, client `.env` files, or version control.
 * **Backup Secrets:**
-  - Database connection strings (`SUPABASE_DB_URL`) and GPG encryption passphrases reside strictly in encrypted **GitHub Repository Secrets**.
+  - Database connection strings (`SUPABASE_DB_URL`), Cloudflare R2 credentials, and GPG public encryption keys reside strictly in encrypted **GitHub Repository Secrets**.
 
 ---
 
@@ -110,7 +137,8 @@ CREATE POLICY "Admins can record regular payments" ON public.fee_payments
 | **Public Data Scraping** | Anonymous visitor queries PostgREST directly | RLS policies reject all `anon` requests; zero records returned. |
 | **SQL Injection (SQLi)** | Attacker inputs SQL payloads into student search | PostgREST uses strictly parameterized queries internally; RPCs use parameterized plpgsql. |
 | **Cross-Site Scripting (XSS)** | Malicious script injected into student name | React automatically escapes JSX string interpolations; input length restrictions enforced. |
-| **Tampering with Past Payments** | Rogue user attempts to alter fee history | RLS grants zero `UPDATE` or `DELETE` permissions on `fee_payments`. |
-| **Unauthorized Reversal** | Regular manager attempts to reverse a fee entry | `public.reverse_payment` RPC strictly validates that caller has `super_admin` role. |
+| **Tampering with Past Payments** | Rogue manager attempts to alter fee history | RLS grants zero `UPDATE` or `DELETE` permissions on `fee_payments`. |
+| **Unauthorized Reversal** | Manager attempts to reverse a fee entry | `public.reverse_payment` RPC strictly validates that caller has `super_admin` role. |
+| **Manager Self-Escalation** | Manager attempts to update role to `super_admin` | RLS policy restricts `public.admins` updates strictly to `super_admin`. |
 | **Accidental Data Purge** | Admin accidentally deletes student with paid fees | Foreign key `ON DELETE RESTRICT` aborts deletion if payment records exist. |
 | **Account Brute-Forcing** | Repeated password guessing attacks | Supabase Auth built-in rate-limiting and Cloudflare DDoS edge filtering. |

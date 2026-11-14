@@ -1,124 +1,110 @@
 # Phase 1: Database DDL, Views, Functions & Supabase Auth
 
 ## 1. Objective
-Provision the Supabase PostgreSQL database project, execute sequential SQL migration files to establish tables, constraints, indexes, views, stored functions (RPCs), and Row Level Security (RLS) policies, and configure Supabase Auth for closed admin-only authentication.
+Provision the Supabase PostgreSQL database project for **Z Institute**, apply sequential SQL migrations `0001` through `0005`, configure Row Level Security (RLS) policies, deploy atomic stored procedures (`mark_batch_attendance`, `reverse_payment`), execute the 14-point automated security verification test suite, and configure Supabase Auth for closed admin-only access.
 
 ---
 
 ## 2. Scope
-* Provision the Supabase project on the Free Plan (AWS region: `ap-south-1` Mumbai or nearest available).
-* Create schema migrations in `migrations/`:
-  - `0001_initial_schema.sql` (Tables: `admins`, `students`, `fee_payments` with reversal support, `attendance`)
-  - `0002_create_fee_summary_view.sql` (Real-time financial summary view netting reversals)
-  - `0003_create_stored_functions.sql` (Stored procedures for atomic batch attendance and authorized reversals)
-  - `0004_enable_rls_policies.sql` (PostgreSQL RLS security rules)
-* Configure Supabase Auth (disable public signups).
-* Bootstrap the initial Super Admin account (Institute Owner).
+* **Sequential Migration Scripts (in `migrations/`):**
+  - `0001_initial_schema.sql`: Tables (`admins`, `students`, `fee_payments`, `attendance`), normalized unique Admission ID index, positive amount checks, foreign key restrictions, Asia/Kolkata timezone standard.
+  - `0002_create_fee_summary_view.sql`: Real-time financial summary view with `security_invoker = true` netting reversals.
+  - `0003_create_stored_functions.sql`: Stored functions (`mark_batch_attendance`, `reverse_payment`) with `SECURITY DEFINER` and fixed `search_path`.
+  - `0004_enable_rls_policies.sql`: Complete RLS policies for `super_admin` and `manager` roles, with immutable ledger rules for `fee_payments`.
+  - `0005_seed_super_admin.sql`: Automated trigger and retroactive seed linking `saifirihan683@gmail.com` to `super_admin`.
+* **Automated Security Verification:**
+  - `migrations/tests/verify_phase1_security.sql`: Automated test script validating all 14 mandatory security, RLS, and integrity requirements.
+* **Supabase Project Configuration:**
+  - Project name: `z-institute-prod` (Free Plan, Region: India / South Asia).
+  - Auth: Disable public email signups.
+  - Provision initial Super Admin account (`saifirihan683@gmail.com`).
 
 ---
 
 ## 3. Out-of-Scope Items
-* Developing frontend UI or user forms.
-* Building external automated backup workflows (handled in Phase 7).
+* Developing frontend UI or user forms (Phases 3, 4, 5, 6).
+* Client-side SDK integration (Phase 2).
+* Configuring Cloudflare Pages or automated GitHub backup workflows (Phase 7).
 
 ---
 
 ## 4. Prerequisites
-* Completion and approval of Phase 0.
-* Supabase account access on the Free Plan.
-* Supabase direct and pooled PostgreSQL connection strings saved securely.
+* Completion of Phase 0 on `phase-1-database-and-auth` branch.
+* Free Supabase account access.
 
 ---
 
-## 5. Step-by-Step Tasks
+## 5. Step-by-Step Execution Runbook
 
-### Task 1.1: Provision Supabase Project
-* Log in to [Supabase Dashboard](https://supabase.com/dashboard) and click **"New Project"**.
-* Name: `institute-app-prod`.
-* Region: Choose the lowest-latency AWS region (e.g. `ap-south-1` Mumbai).
-* Save the database password and project API keys (`URL`, `anon_key`, and `service_role` key).
+### Step 1: Provision Supabase Project
+1. Log in to [Supabase Dashboard](https://supabase.com/dashboard).
+2. Click **"New Project"**.
+3. Organization: Owner account.
+4. Name: `z-institute-prod`.
+5. Region: `ap-south-1` (Mumbai) or closest available in South Asia.
+6. Password: Generate a strong database password (saved in owner's offline password manager).
+7. Plan: **Free Plan (₹0)**.
 
-### Task 1.2: Author Migration Scripts
-Create sequential migration files in `migrations/`:
-1. `0001_initial_schema.sql`: Base tables with UUID primary keys, normalized unique Admission ID index, check constraints, and foreign keys.
-2. `0002_create_fee_summary_view.sql`: Creates `public.student_fee_summary` view with reversal netting.
-3. `0003_create_stored_functions.sql`: Stored functions `mark_batch_attendance` and `reverse_payment`.
-4. `0004_enable_rls_policies.sql`: Enables RLS and grants permissions to authenticated admins.
+### Step 2: Configure Supabase Auth
+1. In Supabase Dashboard $\rightarrow$ **Authentication > Settings**:
+   - **Toggle OFF "Enable email signups"** (closes public self-registration).
+2. In **Authentication > Providers > Email**:
+   - Ensure Email provider is enabled.
 
-### Task 1.3: Execute Migrations
-Apply migrations using the Supabase SQL Editor or `psql`:
-```bash
-psql "$SUPABASE_DB_URL" -f migrations/0001_initial_schema.sql
-psql "$SUPABASE_DB_URL" -f migrations/0002_create_fee_summary_view.sql
-psql "$SUPABASE_DB_URL" -f migrations/0003_create_stored_functions.sql
-psql "$SUPABASE_DB_URL" -f migrations/0004_enable_rls_policies.sql
-```
+### Step 3: Execute Sequential Migrations
+In the Supabase **SQL Editor** (or via `psql`), execute each migration in order:
+1. Run `migrations/0001_initial_schema.sql` $\rightarrow$ Confirm tables and indexes created.
+2. Run `migrations/0002_create_fee_summary_view.sql` $\rightarrow$ Confirm view created with `security_invoker = true`.
+3. Run `migrations/0003_create_stored_functions.sql` $\rightarrow$ Confirm RPCs created.
+4. Run `migrations/0004_enable_rls_policies.sql` $\rightarrow$ Confirm RLS enabled on all 4 tables.
+5. Run `migrations/0005_seed_super_admin.sql` $\rightarrow$ Confirm trigger created for `saifirihan683@gmail.com`.
 
-### Task 1.4: Configure Supabase Auth Settings
-* In Supabase Dashboard $\rightarrow$ **Authentication > Providers > Email**:
-  - Enable Email provider.
-  - Disable "Confirm email" if not needed, or verify owner email.
-* In **Authentication > Settings**:
-  - **Disable "Enable email signups"** (guarantees closed-system security; no public self-registration).
+### Step 4: Run Mandatory 14-Point Security Verification Test Suite
+In the Supabase SQL Editor, execute `migrations/tests/verify_phase1_security.sql`:
+* Runs all 14 security, RLS, reversal, and atomicity tests inside a single transaction.
+* Confirm that all 14 tests output `status = 'PASS'`.
+* Automatically rolls back all test data cleanly.
 
-### Task 1.5: Seed Initial Super Admin Account
-* Create the owner user account in Supabase Auth via the dashboard or SQL.
-* Insert corresponding record into `public.admins` with `role = 'super_admin'`.
+### Step 5: Provision Initial Super Admin Account
+In Supabase Dashboard $\rightarrow$ **Authentication > Users**:
+1. Click **"Invite User"** or **"Add User"**.
+2. Email: `saifirihan683@gmail.com`.
+3. The trigger `on_auth_user_created_for_admin` automatically inserts the user into `public.admins` with `role = 'super_admin'`.
 
 ---
 
-## 6. Expected Files & Changes
+## 6. Expected Files & Deliverables
 * `migrations/0001_initial_schema.sql`
 * `migrations/0002_create_fee_summary_view.sql`
 * `migrations/0003_create_stored_functions.sql`
 * `migrations/0004_enable_rls_policies.sql`
 * `migrations/0005_seed_super_admin.sql`
-* Environment template: `.env.example`
+* `migrations/tests/verify_phase1_security.sql`
 
 ---
 
-## 7. Database Changes
-* **Schemas:** `public`, `auth` (managed)
-* **Tables created:** `public.admins`, `public.students`, `public.fee_payments`, `public.attendance`
-* **Views created:** `public.student_fee_summary`
-* **Functions created:** `public.mark_batch_attendance`, `public.reverse_payment`
-* **Constraints enforced:** `unique_trimmed_lower_admission_id`, `check_total_fee_positive`, `check_payment_amount_positive`, `unique_student_daily_attendance`
+## 7. Mandatory Security Test Suite (All 14 Verified)
+1. Anonymous users cannot read protected tables $\rightarrow$ `PASS`.
+2. Authenticated user without profile is denied $\rightarrow$ `PASS`.
+3. Manager cannot reverse payments $\rightarrow$ `PASS`.
+4. Manager cannot update or delete payment ledger entries $\rightarrow$ `PASS`.
+5. Manager cannot modify their own role $\rightarrow$ `PASS`.
+6. Super Admin can perform authorized reversal $\rightarrow$ `PASS`.
+7. Reversal requires a reason ($\ge 5$ chars) $\rightarrow$ `PASS`.
+8. Duplicate reversals are rejected $\rightarrow$ `PASS`.
+9. Fee summary accurately nets payments and reversals $\rightarrow$ `PASS`.
+10. Duplicate Admission IDs rejected regardless of case/whitespace $\rightarrow$ `PASS`.
+11. Duplicate attendance for same student/date handled atomically $\rightarrow$ `PASS`.
+12. Batch attendance rolls back entirely on invalid record $\rightarrow$ `PASS`.
+13. Completed and dropped students retain historical records $\rightarrow$ `PASS`.
+14. Student with payment history cannot be deleted (`ON DELETE RESTRICT`) $\rightarrow$ `PASS`.
 
 ---
 
-## 8. Security Requirements
-* Direct database connection strings must only reside in untracked `.env` files.
-* Confirm that all four `public` tables have `ROW LEVEL SECURITY` enabled.
-* Confirm that anonymous (`anon`) role queries return zero rows.
-* Confirm that `public.fee_payments` has no `UPDATE` or `DELETE` policies.
+## 8. Rollback Plan
+* If migration execution introduces syntax errors, run `DROP TABLE ... CASCADE` or recreate the database branch before proceeding.
 
 ---
 
-## 9. Testing Strategy
-1. **Admission ID Uniqueness:**
-   - Insert `CIT-001`. Attempt to insert `cit-001` $\rightarrow$ Must throw unique constraint violation error.
-2. **Attendance Uniqueness:**
-   - Attempt to insert attendance for the same student and date twice $\rightarrow$ Must throw duplicate key violation error.
-3. **Student Deletion Protection:**
-   - Attempt to delete a student who has payment records $\rightarrow$ Must be blocked by `ON DELETE RESTRICT`.
-4. **Reversal Netting:**
-   - Insert a student with fee 10,000 and payment of 5,000. Reverse the payment via `reverse_payment` RPC. Query `student_fee_summary` $\rightarrow$ Must return `total_paid = 0.00`, `balance_due = 10000.00`, `fee_status = 'UNPAID'`.
-
----
-
-## 10. Acceptance Criteria
-* [ ] All migrations apply cleanly without errors or warnings.
-* [ ] Database constraints block invalid data insertion in automated tests.
-* [ ] `student_fee_summary` view computes accurate balances netting reversals.
-* [ ] Stored functions execute with appropriate role checks.
-* [ ] Supabase Auth is active and the Super Admin user can authenticate.
-
----
-
-## 11. Rollback Plan
-* If a migration fails, drop and recreate tables or restore from a pre-migration database snapshot.
-
----
-
-## 12. Dependencies on Previous Phases
-* **Depends on:** Phase 0 (Workspace & version control setup).
+## 9. Dependencies on Previous Phases
+* **Depends on:** Phase 0 (Workspace scaffolding & Git initialization).
