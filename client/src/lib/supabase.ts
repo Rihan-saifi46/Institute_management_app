@@ -17,6 +17,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Fallback for Node test environments where native WebSocket is absent (e.g. Node < 22)
+if (typeof globalThis.WebSocket === 'undefined' && typeof window === 'undefined') {
+  (globalThis as any).WebSocket = class MockWebSocket {
+    addEventListener() {}
+    removeEventListener() {}
+    send() {}
+    close() {}
+  };
+}
+
 /**
  * Singleton Supabase Client instance with generic Database typing.
  * Direct PostgREST queries, auth methods, and RPC calls will inherit complete type inference.
