@@ -49,3 +49,4 @@ export const StudentStatusBadge: React.FC<StudentStatusBadgeProps> = ({ status, 
     </span>
   );
 };
+

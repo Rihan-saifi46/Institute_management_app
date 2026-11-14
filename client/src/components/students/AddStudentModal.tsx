@@ -303,3 +303,4 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     </div>
   );
 };
+

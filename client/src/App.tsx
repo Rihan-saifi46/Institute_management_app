@@ -10,8 +10,9 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Login } from './pages/Login';
 import { DashboardOverview } from './pages/DashboardOverview';
 import { StudentsPage } from './pages/StudentsPage';
+import { FeesPage } from './pages/FeesPage';
 import { ModulePlaceholder } from './pages/ModulePlaceholder';
-import { CreditCard, CalendarCheck } from 'lucide-react';
+import { CalendarCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
   return (
@@ -26,17 +27,7 @@ export const App: React.FC = () => {
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<DashboardOverview />} />
               <Route path="/students" element={<StudentsPage />} />
-              <Route
-                path="/fees"
-                element={
-                  <ModulePlaceholder
-                    title="Fees Management & Ledger"
-                    description="Real-time fee summary view, installment payment records, printable receipts, and authorized reversals."
-                    targetPhase="Phase 5"
-                    icon={CreditCard}
-                  />
-                }
-              />
+              <Route path="/fees" element={<FeesPage />} />
               <Route
                 path="/attendance"
                 element={

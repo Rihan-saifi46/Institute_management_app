@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.9.0-p5-completed] - 2026-11-14
+
+### Added
+* **Phase 5 Module A2 (Fees Management & Printable Receipts) Completed:**
+  - `client/src/components/fees/FeeStatusBadge.tsx`: Color-coded status badge for `PAID`, `PARTIAL`, and `UNPAID` statuses.
+  - `client/src/components/fees/RecordPaymentModal.tsx`: Installment collection dialog with non-negative checks, remaining balance context, and print receipt trigger.
+  - `client/src/components/fees/ReversePaymentModal.tsx`: Server-authorized payment reversal modal restricted strictly to Super Admin role with mandatory audit reason ($\ge 5$ characters).
+  - `client/src/components/fees/PaymentHistoryModal.tsx`: Comprehensive audit ledger showing chronological payment installments and reversal offsetting entries with distinct badges.
+  - `client/src/components/fees/PrintableReceipt.tsx`: Browser-native printable fee receipt modal displaying official Z Institute branding, student info, payment breakdown, and print styles.
+  - `client/src/index.css`: Added `@media print` rules isolating `#printable-receipt-card` for clean paper/PDF printing via native `window.print()`.
+  - `client/src/pages/FeesPage.tsx`: Full fees accounting dashboard with aggregate metrics, search bar, status tabs, and ledger table.
+  - `client/src/App.tsx`: Wired `/fees` route directly to `FeesPage`.
+  - `client/src/__tests__/fees-components.test.ts`: Automated test suite for fee components and INR currency formatting.
+  - Verified 0 TypeScript compilation errors and 29/29 Vitest tests passing.
+  - Verified Vite production build (`dist/index.html`, `dist/assets/`).
+
 ## [0.8.0-p4-completed] - 2026-11-14
 
 ### Added
