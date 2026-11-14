@@ -12,6 +12,8 @@ interface AttendanceDateBarProps {
   totalStudents: number;
   presentCount: number;
   absentCount: number;
+  statusFilter?: 'all' | 'present' | 'absent';
+  onStatusFilterChange?: (filter: 'all' | 'present' | 'absent') => void;
 }
 
 export const AttendanceDateBar: React.FC<AttendanceDateBarProps> = ({
@@ -21,6 +23,8 @@ export const AttendanceDateBar: React.FC<AttendanceDateBarProps> = ({
   totalStudents,
   presentCount,
   absentCount,
+  statusFilter = 'all',
+  onStatusFilterChange,
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -93,17 +97,47 @@ export const AttendanceDateBar: React.FC<AttendanceDateBarProps> = ({
           )}
         </div>
 
-        {/* Live Batch Metric Pill Counters */}
+        {/* Live Batch Metric Pill Counters (Click to Filter Table) */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-medium">
-            Active: <span className="font-bold text-slate-900">{totalStudents}</span>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
-            Present: <span className="font-bold text-emerald-700">{presentCount}</span>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 font-medium">
-            Absent: <span className="font-bold text-rose-700">{absentCount}</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange?.('all')}
+            className={`px-3 py-1.5 rounded-lg border font-medium transition-all ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+            }`}
+            title="Show all active students"
+          >
+            Active: <span className="font-bold">{totalStudents}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange?.('present')}
+            className={`px-3 py-1.5 rounded-lg border font-medium transition-all ${
+              statusFilter === 'present'
+                ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+            }`}
+            title="Filter sheet to show only Present students"
+          >
+            Present: <span className="font-bold">{presentCount}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange?.('absent')}
+            className={`px-3 py-1.5 rounded-lg border font-medium transition-all ${
+              statusFilter === 'absent'
+                ? 'bg-rose-600 border-rose-600 text-white shadow-xs'
+                : 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100'
+            }`}
+            title="Filter sheet to show only Absent students"
+          >
+            Absent: <span className="font-bold">{absentCount}</span>
+          </button>
+
           <div className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold">
             {presentPercentage}% Attendance
           </div>

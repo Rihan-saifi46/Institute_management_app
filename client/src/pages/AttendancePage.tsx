@@ -38,6 +38,7 @@ export const AttendancePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent'>('all');
 
   // Student history modal state
   const [historyStudent, setHistoryStudent] = useState<Student | null>(null);
@@ -206,6 +207,8 @@ export const AttendancePage: React.FC = () => {
         totalStudents={activeStudents.length}
         presentCount={presentCount}
         absentCount={absentCount}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
       />
 
       {/* Interactive Batch Attendance Table */}
@@ -220,6 +223,9 @@ export const AttendancePage: React.FC = () => {
         }}
         coursesList={coursesList}
         isLoading={isLoading}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onViewStudentHistory={(student) => setHistoryStudent(student)}
       />
 
       {/* Pre-Submission Review Modal */}
