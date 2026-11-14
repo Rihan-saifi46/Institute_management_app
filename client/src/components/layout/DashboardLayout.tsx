@@ -31,3 +31,4 @@ export const DashboardLayout: React.FC = () => {
     </div>
   );
 };
+

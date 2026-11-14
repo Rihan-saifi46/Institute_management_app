@@ -9,8 +9,9 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Login } from './pages/Login';
 import { DashboardOverview } from './pages/DashboardOverview';
+import { StudentsPage } from './pages/StudentsPage';
 import { ModulePlaceholder } from './pages/ModulePlaceholder';
-import { Users, CreditCard, CalendarCheck } from 'lucide-react';
+import { CreditCard, CalendarCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
   return (
@@ -24,17 +25,7 @@ export const App: React.FC = () => {
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<DashboardOverview />} />
-              <Route
-                path="/students"
-                element={
-                  <ModulePlaceholder
-                    title="Student Directory & Registration"
-                    description="Manual Admission ID enrollment, multi-field text search, course filtering, and status management."
-                    targetPhase="Phase 4"
-                    icon={Users}
-                  />
-                }
-              />
+              <Route path="/students" element={<StudentsPage />} />
               <Route
                 path="/fees"
                 element={
@@ -69,3 +60,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+
