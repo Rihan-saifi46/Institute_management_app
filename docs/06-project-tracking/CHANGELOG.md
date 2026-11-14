@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.0-p2-completed] - 2026-11-14
+
+### Added
+* **Phase 2 Supabase Client Integration & RPC Layer Completed:**
+  - `client/package.json` & `client/tsconfig.json`: TypeScript build workspace established with strict checks.
+  - `client/src/types/database.ts`: Complete TypeScript database definition mapping all tables, views, RPCs, and custom enum types.
+  - `client/src/types/common.ts`: Common pagination and utility interfaces.
+  - `client/src/lib/supabase.ts`: Singleton typed `@supabase/supabase-js` client configured for Vite environment variables with custom auth token persistence.
+  - `client/src/services/auth.ts`: Authentication service for email/password sign-in, session retrieval, admin role profile resolution, and auth state listeners.
+  - `client/src/services/students.ts`: Student CRUD operations with client-side sanitization, instant multi-field search (`name`, `admission_id`, `phone`), course filtering, and distinct course query.
+  - `client/src/services/fees.ts`: Financial ledger services reading the real-time `student_fee_summary` view, recording immutable payment installments, fetching student payment ledgers, and invoking the trusted `reverse_payment` database RPC.
+  - `client/src/services/attendance.ts`: Date-wise attendance queries with joined student details, date range history, student percentage calculation, and atomic `mark_batch_attendance` database RPC execution.
+  - `client/src/__tests__/services.test.ts`: 18-point automated Vitest integration test suite covering input sanitization, error boundaries, RPC parameter handling, and data transformation. 100% PASS.
+  - Zero TypeScript compilation errors (`tsc --noEmit`).
+
 ## [0.5.0-p1-verified] - 2026-11-14
 
 ### Completed & Verified
