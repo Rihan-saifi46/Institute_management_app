@@ -20,6 +20,7 @@ gpg_private_key*
 # Database Snapshots & Local Dumps
 *.sql
 !migrations/*.sql
+!migrations/**/*.sql
 *.sql.gpg
 *.dump
 *.tar
