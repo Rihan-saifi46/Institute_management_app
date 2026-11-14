@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.8.0-p4-completed] - 2026-11-14
+
+### Added
+* **Phase 4 Module A1 (Student Management) Completed:**
+  - `client/src/components/students/StudentStatusBadge.tsx`: Badge rendering for `active`, `completed`, and `dropped` student statuses.
+  - `client/src/components/students/StudentFilters.tsx`: Search toolbar with multi-field search (`name`, `admission_id`, `phone`), dynamic course filter dropdown, status tabs (`all`, `active`, `completed`, `dropped`), and clear filters button.
+  - `client/src/components/students/AddStudentModal.tsx`: Admission dialog enforcing mandatory manual Admission ID entry (case-normalized), non-negative fee validation, course suggestions datalist, and duplicate index collision error banner.
+  - `client/src/components/students/EditStudentModal.tsx`: Full profile editing modal with lifecycle status selection.
+  - `client/src/components/students/DeleteStudentModal.tsx`: Safety modal with clear guidance on database `ON DELETE RESTRICT` foreign key protections.
+  - `client/src/components/students/StudentTable.tsx`: Tabular directory view with Indian Rupee currency formatting, skeleton loading states, empty state with CTA, and pagination controls.
+  - `client/src/pages/StudentsPage.tsx`: Full page view integrating search, table, filters, modals, auto-refresh, and notification alerts.
+  - `client/src/App.tsx`: Wired `/students` route directly to `StudentsPage`.
+  - `client/src/__tests__/students-components.test.ts`: Component test suite.
+  - Verified 0 TypeScript compilation errors and 27/27 Vitest unit/integration tests passing.
+  - Verified Vite production build (`dist/index.html`, `dist/assets/`).
+
 ## [0.7.0-p3-completed] - 2026-11-14
 
 ### Added
