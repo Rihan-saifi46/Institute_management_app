@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.10.0-p6-completed] - 2026-11-14
+
+### Added
+* **Phase 6 Module B (Batch Attendance Management) Completed:**
+  - `client/src/components/attendance/AttendanceDateBar.tsx`: Date selection control restricting selection to today or earlier dates, quick shortcut pills ("Today", "Yesterday"), live session metrics counters (Total, Present, Absent), and recorded status indicator.
+  - `client/src/components/attendance/AttendanceReviewModal.tsx`: High-contrast pre-submission confirmation dialog highlighting absent students by name before committing records to the database.
+  - `client/src/components/attendance/BatchAttendanceSheet.tsx`: High-velocity attendance grid defaulting active students to "Present" for <15s daily workflows, one-click toggle chips, master "Mark All Present" / "Mark All Absent" controls, real-time student/course search filtering, and sticky unsaved-changes action bar.
+  - `client/src/components/attendance/StudentAttendanceHistoryModal.tsx`: Comprehensive individual student attendance history modal displaying lifetime summary stats, overall attendance percentage, and chronological attendance logs.
+  - `client/src/pages/AttendancePage.tsx`: Integrated attendance management interface uniting the date toolbar, batch attendance sheet, pre-commit review dialog, and student history dialog with automatic session synchronization.
+  - `client/src/App.tsx`: Wired `/attendance` route directly to `AttendancePage`.
+  - `client/src/__tests__/attendance-components.test.ts`: Automated test suite covering component structure and attendance percentage calculations.
+  - Verified 0 TypeScript compilation errors (`tsc --noEmit`) and 31/31 Vitest unit/integration tests passing.
+  - Verified Vite production build (`dist/index.html`, `dist/assets/`).
+
 ## [0.9.0-p5-completed] - 2026-11-14
 
 ### Added
