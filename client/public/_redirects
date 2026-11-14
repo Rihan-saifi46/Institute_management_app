@@ -1,3 +1,0 @@
-# Cloudflare Pages SPA Routing (Rewrites all route requests to root with 200 OK)
-/*    /   200
-

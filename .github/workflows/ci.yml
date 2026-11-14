@@ -39,9 +39,8 @@ jobs:
       - name: Verify Vite Production Build
         run: npm run build
 
-      - name: Verify Cloudflare Pages Redirects & Headers
+      - name: Verify Cloudflare Pages Security Headers
         run: |
-          test -f dist/_redirects || (echo "dist/_redirects is missing!" && exit 1)
           test -f dist/_headers || (echo "dist/_headers is missing!" && exit 1)
           echo "Cloudflare Pages deployment artifacts verified."
 
