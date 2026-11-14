@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.0-p1-verified] - 2026-11-14
+
+### Completed & Verified
+* **Phase 1 Production Verification:**
+  - Owner provisioned Supabase production instance: Project Reference `rununbjiqblmlttdmgxu`.
+  - Migrations `0001` through `0005` applied successfully.
+  - All 14 automated security verification tests in `verify_phase1_security.sql` verified and passed with 100% success.
+  - Zero-cost Free Tier baseline verified (PostgreSQL, PostgREST API, Supabase Auth).
+  - Test reporting harness updated to explicitly reset session role before writing logs to avoid permission collisions.
+
 ## [0.4.0-p1-migrations] - 2026-11-14
 
 ### Added
