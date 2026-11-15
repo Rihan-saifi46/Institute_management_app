@@ -115,7 +115,11 @@ export async function saveBatchAttendance(
     throw new Error(`Batch attendance failed: ${error.message}`);
   }
 
-  return Number(data);
+  if (typeof data === 'object' && data !== null && 'recorded_count' in (data as any)) {
+    return Number((data as any).recorded_count);
+  }
+
+  return Number(data || 0);
 }
 
 /**

@@ -6,7 +6,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Calendar, CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import {
   getStudentAttendanceHistory,
-  getStudentAttendanceStats,
   type AttendanceRecord,
   type AttendanceSummaryStats,
 } from '../../services/attendance';
@@ -46,12 +45,20 @@ export const StudentAttendanceHistoryModal: React.FC<StudentAttendanceHistoryMod
     setIsLoading(true);
     setError(null);
     try {
-      const [historyData, statsData] = await Promise.all([
-        getStudentAttendanceHistory(student.id),
-        getStudentAttendanceStats(student.id),
-      ]);
+      const historyData = await getStudentAttendanceHistory(student.id);
+      const totalSessions = historyData.length;
+      const presentCount = historyData.filter((r) => r.status === 'present').length;
+      const absentCount = historyData.filter((r) => r.status === 'absent').length;
+      const attendancePercentage =
+        totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
+
       setRecords(historyData);
-      setStats(statsData);
+      setStats({
+        totalSessions,
+        presentCount,
+        absentCount,
+        attendancePercentage,
+      });
     } catch (err: any) {
       console.error('[StudentAttendanceHistoryModal] Error:', err);
       setError(err.message || 'Failed to load attendance history.');

@@ -11,6 +11,7 @@ import { Login } from './pages/Login';
 import { DashboardOverview } from './pages/DashboardOverview';
 import { StudentsPage } from './pages/StudentsPage';
 import { FeesPage } from './pages/FeesPage';
+import { AdvanceFeesPage } from './pages/AdvanceFeesPage';
 import { AttendancePage } from './pages/AttendancePage';
 
 export const App: React.FC = () => {
@@ -27,6 +28,7 @@ export const App: React.FC = () => {
               <Route path="/" element={<DashboardOverview />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/fees" element={<FeesPage />} />
+              <Route path="/advance-fees" element={<AdvanceFeesPage />} />
               <Route path="/attendance" element={<AttendancePage />} />
             </Route>
           </Route>

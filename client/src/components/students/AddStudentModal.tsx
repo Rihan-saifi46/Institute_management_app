@@ -233,11 +233,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             </p>
           </div>
 
-          {/* Total Fee & Joining Date */}
+          {/* Monthly Fee & Joining Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label htmlFor="total_fee" className="block text-xs font-semibold text-slate-800 mb-1">
-                Total Course Fee (₹) <span className="text-rose-500">*</span>
+                Monthly Tuition Fee (₹) <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">
@@ -252,10 +252,13 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   disabled={isSubmitting}
                   value={totalFee}
                   onChange={(e) => setTotalFee(e.target.value)}
-                  placeholder="0"
+                  placeholder="e.g. 2000"
                   className="w-full pl-7 pr-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-100 font-medium"
                 />
               </div>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Individual monthly fee snapshot for student billing.
+              </p>
             </div>
 
             <div>

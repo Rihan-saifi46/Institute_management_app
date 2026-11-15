@@ -102,7 +102,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
               <th scope="col" className="py-3 px-4">Phone</th>
               <th scope="col" className="py-3 px-4">Course</th>
               <th scope="col" className="py-3 px-4">Joining Date</th>
-              <th scope="col" className="py-3 px-4 text-right">Total Fee</th>
+              <th scope="col" className="py-3 px-4 text-right">Monthly Fee</th>
               <th scope="col" className="py-3 px-4 text-center">Status</th>
               <th scope="col" className="py-3 px-4 sm:px-6 text-right">Actions</th>
             </tr>

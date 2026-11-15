@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Users,
   CreditCard,
+  CalendarClock,
   CalendarCheck,
   GraduationCap,
   X,
@@ -28,6 +29,7 @@ const navItems: NavItem[] = [
   { label: 'Overview', path: '/', icon: LayoutDashboard },
   { label: 'Students', path: '/students', icon: Users },
   { label: 'Fees Management', path: '/fees', icon: CreditCard },
+  { label: 'Advance Fees', path: '/advance-fees', icon: CalendarClock },
   { label: 'Batch Attendance', path: '/attendance', icon: CalendarCheck },
 ];
 

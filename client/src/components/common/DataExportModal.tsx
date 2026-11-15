@@ -1,5 +1,6 @@
 // ==============================================================================
 // Z Institute Management System - Data Export & Portability Modal
+// Aligned with Migration 0006: Monthly Fee Engine & Advance Fee Module
 // ==============================================================================
 
 import React, { useState } from 'react';
@@ -15,10 +16,14 @@ import {
   Calendar,
   CreditCard,
   Users,
+  CalendarDays,
+  Clock,
 } from 'lucide-react';
 import {
   exportCompleteSystemJson,
   exportStudentsCsv,
+  exportMonthlyDuesCsv,
+  exportAdvancesCsv,
   exportPaymentsCsv,
   exportAttendanceCsv,
 } from '../../services/export';
@@ -28,7 +33,13 @@ interface DataExportModalProps {
   onClose: () => void;
 }
 
-type ExportType = 'json' | 'students_csv' | 'payments_csv' | 'attendance_csv';
+type ExportType =
+  | 'json'
+  | 'students_csv'
+  | 'monthly_dues_csv'
+  | 'advances_csv'
+  | 'payments_csv'
+  | 'attendance_csv';
 
 export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClose }) => {
   const [activeExport, setActiveExport] = useState<ExportType | null>(null);
@@ -48,13 +59,25 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
       if (type === 'json') {
         res = await exportCompleteSystemJson();
         setSuccessInfo({
-          message: `Exported ${res.recordCount} records across all tables.`,
+          message: `Exported ${res.recordCount} records across all tables (students, dues, advances, payments, outbox, attendance).`,
           filename: res.filename,
         });
       } else if (type === 'students_csv') {
         res = await exportStudentsCsv();
         setSuccessInfo({
           message: `Exported ${res.recordCount} student directory records to CSV.`,
+          filename: res.filename,
+        });
+      } else if (type === 'monthly_dues_csv') {
+        res = await exportMonthlyDuesCsv();
+        setSuccessInfo({
+          message: `Exported ${res.recordCount} monthly fee dues across all periods to CSV.`,
+          filename: res.filename,
+        });
+      } else if (type === 'advances_csv') {
+        res = await exportAdvancesCsv();
+        setSuccessInfo({
+          message: `Exported ${res.recordCount} advance fee deposits to CSV.`,
           filename: res.filename,
         });
       } else if (type === 'payments_csv') {
@@ -85,7 +108,7 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
       aria-modal="true"
       aria-labelledby="export-modal-title"
     >
-      <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2.5">
@@ -94,10 +117,10 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
             </div>
             <div>
               <h3 id="export-modal-title" className="text-base font-bold text-slate-900 leading-tight">
-                Export & Download Institute Data
+                Export &amp; Download Institute Data
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Data Portability & Offline Spreadsheet Backups
+                Data Portability, Monthly Dues Audits &amp; Offline Spreadsheets
               </p>
             </div>
           </div>
@@ -117,7 +140,7 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 flex items-start space-x-2.5">
             <ShieldCheck className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-semibold">User Data Portability</p>
+              <p className="font-semibold">User Data Portability &amp; Audit Ready</p>
               <p className="text-[11px] text-blue-700 leading-relaxed">
                 In-app CSV and JSON exports generate portable snapshots for offline record keeping or Excel/Google Sheets auditing. Automated full database disaster recovery backups run daily to encrypted offsite cloud storage.
               </p>
@@ -150,10 +173,10 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
               <div>
                 <div className="flex items-center space-x-2 text-brand-700 mb-1.5 font-bold">
                   <FileJson className="w-4 h-4" />
-                  <span>Full System JSON</span>
+                  <span>Full System JSON Backup</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Export complete structured snapshot: students, fees, ledger, and attendance history in a single JSON file.
+                  Export complete structured snapshot: students, monthly fee dues, advance deposits, payments ledger, outbox, and attendance history in a single JSON file.
                 </p>
               </div>
 
@@ -171,21 +194,85 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
                 ) : (
                   <>
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download JSON</span>
+                    <span>Download JSON Backup</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* 2. Students Directory CSV */}
+            {/* 2. Monthly Fee Dues CSV (New) */}
+            <div className="p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/20 transition-all flex flex-col justify-between space-y-3 bg-white shadow-2xs">
+              <div>
+                <div className="flex items-center space-x-2 text-indigo-700 mb-1.5 font-bold">
+                  <CalendarDays className="w-4 h-4" />
+                  <span>Monthly Fee Dues CSV</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Export month-by-month student dues, fee snapshot amounts, advance offsets applied, normal collections, arrears flags, and payment statuses.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleExport('monthly_dues_csv')}
+                disabled={activeExport !== null}
+                className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 disabled:opacity-50 rounded-lg transition-colors"
+              >
+                {activeExport === 'monthly_dues_csv' ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Generating CSV...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Download Monthly Dues</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* 3. Advance Deposits CSV (New) */}
+            <div className="p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/20 transition-all flex flex-col justify-between space-y-3 bg-white shadow-2xs">
+              <div>
+                <div className="flex items-center space-x-2 text-amber-700 mb-1.5 font-bold">
+                  <Clock className="w-4 h-4" />
+                  <span>Advance Fee Deposits CSV</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Export advance tuition fee records: target billing month, monthly fee ceiling, deposited amount, email notification status, and void audit logs.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleExport('advances_csv')}
+                disabled={activeExport !== null}
+                className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 disabled:opacity-50 rounded-lg transition-colors"
+              >
+                {activeExport === 'advances_csv' ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Generating CSV...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Download Advances CSV</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* 4. Students Directory CSV */}
             <div className="p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/20 transition-all flex flex-col justify-between space-y-3 bg-white shadow-2xs">
               <div>
                 <div className="flex items-center space-x-2 text-blue-700 mb-1.5 font-bold">
                   <Users className="w-4 h-4" />
-                  <span>Students CSV</span>
+                  <span>Students Directory CSV</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Export enrolled student profiles, admission IDs, contacts, total fees, paid amounts, and dues balances.
+                  Export student roster with admission IDs, contact details, individual monthly fees, total payments, and lifecycle statuses.
                 </p>
               </div>
 
@@ -203,21 +290,21 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
                 ) : (
                   <>
                     <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Download CSV</span>
+                    <span>Download Students CSV</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* 3. Fee Payments Ledger CSV */}
+            {/* 5. Fee Payments Ledger CSV */}
             <div className="p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/20 transition-all flex flex-col justify-between space-y-3 bg-white shadow-2xs">
               <div>
                 <div className="flex items-center space-x-2 text-emerald-700 mb-1.5 font-bold">
                   <CreditCard className="w-4 h-4" />
-                  <span>Fee Ledger CSV</span>
+                  <span>Financial Ledger CSV</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Export financial payment audit records including payment dates, amounts, modes, receipt numbers, and reversal reasons.
+                  Export immutable financial payment audit records: dates, amounts, payment modes, receipt numbers, and reversal justification reasons.
                 </p>
               </div>
 
@@ -235,16 +322,16 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
                 ) : (
                   <>
                     <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Download CSV</span>
+                    <span>Download Ledger CSV</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* 4. Attendance History CSV */}
-            <div className="p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/20 transition-all flex flex-col justify-between space-y-3 bg-white shadow-2xs">
+            {/* 6. Attendance History CSV */}
+            <div className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all flex flex-col justify-between space-y-3 bg-white shadow-2xs">
               <div>
-                <div className="flex items-center space-x-2 text-amber-700 mb-1.5 font-bold">
+                <div className="flex items-center space-x-2 text-slate-700 mb-1.5 font-bold">
                   <Calendar className="w-4 h-4" />
                   <span>Attendance Logs CSV</span>
                 </div>
@@ -257,7 +344,7 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
                 type="button"
                 onClick={() => handleExport('attendance_csv')}
                 disabled={activeExport !== null}
-                className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 disabled:opacity-50 rounded-lg transition-colors"
+                className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-50 rounded-lg transition-colors"
               >
                 {activeExport === 'attendance_csv' ? (
                   <>
@@ -267,7 +354,7 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
                 ) : (
                   <>
                     <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Download CSV</span>
+                    <span>Download Attendance CSV</span>
                   </>
                 )}
               </button>
@@ -289,4 +376,3 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
     </div>
   );
 };
-

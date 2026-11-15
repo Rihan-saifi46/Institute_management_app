@@ -7,7 +7,9 @@
     "dev": "npm --prefix client run dev",
     "build": "npm --prefix client install && npm --prefix client run build && node -e \"require('fs').cpSync('client/dist', 'dist', {recursive: true})\"",
     "preview": "npm --prefix client run preview",
-    "lint": "npm --prefix client run lint"
+    "lint": "npm --prefix client run lint",
+    "test": "npm --prefix client run test",
+    "email-worker": "node scripts/email-outbox-worker.mjs"
   },
   "keywords": [
     "institute-management",

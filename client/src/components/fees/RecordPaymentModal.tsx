@@ -33,6 +33,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [justRecordedPayment, setJustRecordedPayment] = useState<FeePayment | null>(null);
+  const [latestSummary, setLatestSummary] = useState<StudentFeeSummary | null>(null);
 
   if (!isOpen || !studentSummary) return null;
 
@@ -52,6 +53,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     setRemarks('');
     setErrorMessage(null);
     setJustRecordedPayment(null);
+    setLatestSummary(null);
   };
 
   const handleClose = () => {
@@ -89,13 +91,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
       const updatedSummary: StudentFeeSummary = {
         ...studentSummary,
         total_paid: studentSummary.total_paid + parsedAmount,
-        balance_due: Math.max(0, studentSummary.balance_due - parsedAmount),
+        balance_due: studentSummary.balance_due - parsedAmount,
         fee_status:
           studentSummary.total_paid + parsedAmount >= studentSummary.total_fee
             ? 'PAID'
             : 'PARTIAL',
       };
 
+      setLatestSummary(updatedSummary);
       onPaymentSuccess(payment, updatedSummary);
     } catch (err: any) {
       console.error('[RecordPaymentModal] Error:', err);
@@ -107,7 +110,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
   const handlePrintAfterRecord = () => {
     if (justRecordedPayment) {
-      onOpenReceipt(justRecordedPayment, studentSummary);
+      onOpenReceipt(justRecordedPayment, latestSummary || studentSummary);
       handleClose();
     }
   };
