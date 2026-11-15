@@ -5,17 +5,12 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/database';
 
-// In Vite, client environment variables are exposed via import.meta.env
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  // Helpful development warning if variables have not been configured yet
-  console.warn(
-    '[SupabaseClient] Warning: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. ' +
-    'Please verify that your client/.env.local file is configured.'
-  );
-}
+// In Vite, client environment variables are exposed via import.meta.env.
+// Fallback directly to the production Z Institute Supabase project credentials if env vars are omitted in host dashboard.
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL || 'https://rununbjiqblmlttdmgxu.supabase.co';
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_5JycCXBpmMTGi58sfGVwJA_aA4zyqyP';
 
 // Fallback for Node test environments where native WebSocket is absent (e.g. Node < 22)
 if (typeof globalThis.WebSocket === 'undefined' && typeof window === 'undefined') {
@@ -32,8 +27,8 @@ if (typeof globalThis.WebSocket === 'undefined' && typeof window === 'undefined'
  * Direct PostgREST queries, auth methods, and RPC calls will inherit complete type inference.
  */
 export const supabase = createClient<Database>(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key',
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       persistSession: true,
