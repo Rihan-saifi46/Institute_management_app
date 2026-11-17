@@ -1,9 +1,9 @@
 // ==============================================================================
-// Z Institute Management System - Attendance Date & Status Bar
+// Z Institute Management System - Attendance Date & Status Bar (Matches Reference 1)
 // ==============================================================================
 
 import React from 'react';
-import { Calendar, CheckCircle2, Clock } from 'lucide-react';
+import { Calendar, Users, Check, X, Clock, CheckCircle2 } from 'lucide-react';
 
 interface AttendanceDateBarProps {
   selectedDate: string;
@@ -28,24 +28,24 @@ export const AttendanceDateBar: React.FC<AttendanceDateBarProps> = ({
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const getYesterdayStr = () => {
+  const getRelativeDateStr = (daysAgo: number) => {
     const d = new Date();
-    d.setDate(d.getDate() - 1);
+    d.setDate(d.getDate() - daysAgo);
     return d.toISOString().split('T')[0];
   };
 
-  const yesterdayStr = getYesterdayStr();
+  const yesterdayStr = getRelativeDateStr(1);
 
   const presentPercentage =
     totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Date Selector & Quick Toggles */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Date Selector & Quick Toggles (Matches Reference 1) */}
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <Calendar className="w-4 h-4" />
             </div>
             <input
@@ -53,19 +53,19 @@ export const AttendanceDateBar: React.FC<AttendanceDateBarProps> = ({
               max={todayStr}
               value={selectedDate}
               onChange={(e) => onDateChange(e.target.value)}
-              className="pl-9 pr-3 py-2 text-sm font-semibold text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-brand-500 focus:border-brand-500 shadow-2xs"
+              className="pl-10 pr-3.5 py-2 text-xs sm:text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 shadow-2xs cursor-pointer"
             />
           </div>
 
-          {/* Quick Date Shortcuts */}
+          {/* Quick Date Shortcut Pills */}
           <div className="flex items-center space-x-1.5">
             <button
               type="button"
               onClick={() => onDateChange(todayStr)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
                 selectedDate === todayStr
-                  ? 'bg-brand-50 text-brand-700 border-brand-300'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               Today
@@ -73,73 +73,95 @@ export const AttendanceDateBar: React.FC<AttendanceDateBarProps> = ({
             <button
               type="button"
               onClick={() => onDateChange(yesterdayStr)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
                 selectedDate === yesterdayStr
-                  ? 'bg-brand-50 text-brand-700 border-brand-300'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               Yesterday
             </button>
+            <button
+              type="button"
+              onClick={() => onDateChange(getRelativeDateStr(7))}
+              className="hidden sm:inline-block px-3.5 py-2 text-xs font-bold rounded-xl bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all"
+            >
+              Last 7 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => onDateChange(todayStr.substring(0, 8) + '01')}
+              className="hidden sm:inline-block px-3.5 py-2 text-xs font-bold rounded-xl bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all"
+            >
+              This Month
+            </button>
           </div>
 
-          {/* Database Submission State Pill */}
+          {/* Saved Status Indicator */}
           {isAlreadyRecorded ? (
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>Attendance Saved for this Date</span>
             </div>
           ) : (
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
               <Clock className="w-3.5 h-3.5 text-amber-600" />
               <span>Not Recorded Yet</span>
             </div>
           )}
         </div>
 
-        {/* Live Batch Metric Pill Counters (Click to Filter Table) */}
+        {/* Metric Pill Badges (Matches Reference 1) */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Active Students Pill */}
           <button
             type="button"
             onClick={() => onStatusFilterChange?.('all')}
-            className={`px-3 py-1.5 rounded-lg border font-medium transition-all ${
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all ${
               statusFilter === 'all'
-                ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                ? 'bg-[#07183D] text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
             title="Show all active students"
           >
-            Active: <span className="font-bold">{totalStudents}</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>Active: {totalStudents}</span>
           </button>
 
+          {/* Present Count Pill */}
           <button
             type="button"
             onClick={() => onStatusFilterChange?.('present')}
-            className={`px-3 py-1.5 rounded-lg border font-medium transition-all ${
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all ${
               statusFilter === 'present'
-                ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
             }`}
-            title="Filter sheet to show only Present students"
+            title="Filter sheet to show Present students"
           >
-            Present: <span className="font-bold">{presentCount}</span>
+            <Check className="w-3.5 h-3.5" />
+            <span>Present: {presentCount}</span>
           </button>
 
+          {/* Absent Count Pill */}
           <button
             type="button"
             onClick={() => onStatusFilterChange?.('absent')}
-            className={`px-3 py-1.5 rounded-lg border font-medium transition-all ${
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all ${
               statusFilter === 'absent'
-                ? 'bg-rose-600 border-rose-600 text-white shadow-xs'
-                : 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
             }`}
-            title="Filter sheet to show only Absent students"
+            title="Filter sheet to show Absent students"
           >
-            Absent: <span className="font-bold">{absentCount}</span>
+            <X className="w-3.5 h-3.5" />
+            <span>Absent: {absentCount}</span>
           </button>
 
-          <div className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold">
-            {presentPercentage}% Attendance
+          {/* Attendance Percentage Pill */}
+          <div className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl font-bold bg-purple-50 text-purple-700 border border-purple-200">
+            <span className="w-2 h-2 rounded-full bg-purple-600" />
+            <span>{presentPercentage}% Attendance</span>
           </div>
         </div>
       </div>

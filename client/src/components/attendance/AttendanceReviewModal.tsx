@@ -53,18 +53,18 @@ export const AttendanceReviewModal: React.FC<AttendanceReviewModalProps> = ({
       aria-modal="true"
       aria-labelledby="review-modal-title"
     >
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center">
-              <CalendarCheck className="w-4 h-4" />
+        <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 text-white flex items-center justify-center shadow-glow-blue shrink-0">
+              <CalendarCheck className="w-5 h-5" />
             </div>
             <div>
               <h3 id="review-modal-title" className="text-base font-bold text-slate-900 leading-tight">
                 Review Class Attendance
               </h3>
-              <p className="text-xs text-slate-500 font-medium">{formatDate(date)}</p>
+              <p className="text-xs text-slate-400 font-medium">{formatDate(date)}</p>
             </div>
           </div>
 
@@ -72,7 +72,7 @@ export const AttendanceReviewModal: React.FC<AttendanceReviewModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -140,12 +140,12 @@ export const AttendanceReviewModal: React.FC<AttendanceReviewModalProps> = ({
         </div>
 
         {/* Modal Actions */}
-        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-3 shrink-0">
+        <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-end space-x-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             Go Back & Edit
           </button>
@@ -153,7 +153,7 @@ export const AttendanceReviewModal: React.FC<AttendanceReviewModalProps> = ({
             type="button"
             onClick={onConfirmSave}
             disabled={isSaving}
-            className="inline-flex items-center space-x-1.5 px-5 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-xs hover:shadow-sm transition-all disabled:opacity-60"
+            className="inline-flex items-center space-x-1.5 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-glow-blue transition-all disabled:opacity-60"
           >
             {isSaving ? (
               <>

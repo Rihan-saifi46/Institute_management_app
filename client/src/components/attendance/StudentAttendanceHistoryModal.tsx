@@ -82,18 +82,18 @@ export const StudentAttendanceHistoryModal: React.FC<StudentAttendanceHistoryMod
       aria-modal="true"
       aria-labelledby="student-attendance-history-title"
     >
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center">
-              <Calendar className="w-4 h-4" />
+        <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 text-white flex items-center justify-center shadow-glow-blue shrink-0">
+              <Calendar className="w-5 h-5" />
             </div>
             <div>
               <h3 id="student-attendance-history-title" className="text-base font-bold text-slate-900 leading-tight">
                 Student Attendance Record
               </h3>
-              <p className="text-xs text-slate-500 font-mono">
+              <p className="text-xs text-slate-400 font-mono">
                 {student.name} ({student.admission_id})
               </p>
             </div>
@@ -102,7 +102,7 @@ export const StudentAttendanceHistoryModal: React.FC<StudentAttendanceHistoryMod
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -178,11 +178,11 @@ export const StudentAttendanceHistoryModal: React.FC<StudentAttendanceHistoryMod
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
+        <div className="px-6 py-4 bg-white border-t border-slate-100 flex justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100"
+            className="px-5 py-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             Close
           </button>

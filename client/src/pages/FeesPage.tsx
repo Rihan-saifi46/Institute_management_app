@@ -1,6 +1,6 @@
 // ==============================================================================
 // Z Institute Management System - Fees Management & Monthly Billing Page
-// Redesigned for Migration 0006: Month-Wise Dues & Strict Full-Payment Normal Dues
+// Redesigned to Match Reference Screenshot 3
 // ==============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -15,8 +15,11 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
-  Sparkles,
   Download,
+  Wallet,
+  Landmark,
+  Users,
+  ChevronDown,
 } from 'lucide-react';
 import {
   getFeePeriods,
@@ -30,8 +33,18 @@ import { exportMonthlyDuesCsv } from '../services/export';
 import { RecordMonthlyPaymentModal } from '../components/fees/RecordMonthlyPaymentModal';
 import { PaymentHistoryModal } from '../components/fees/PaymentHistoryModal';
 import { PrintableMonthlyReceipt, type MonthlyReceiptData } from '../components/fees/PrintableMonthlyReceipt';
+import { WalletCoinsIllustration } from '../components/common/illustrations/WalletCoinsIllustration';
+import { SparklineCurve } from '../components/common/illustrations/SparklineCurve';
 import type { FeeStatus } from '../types/database';
 import type { PaginatedResult } from '../types/common';
+
+const avatarGradients = [
+  'from-blue-500 to-blue-600',
+  'from-purple-500 to-indigo-600',
+  'from-sky-500 to-blue-500',
+  'from-indigo-500 to-purple-600',
+  'from-violet-500 to-purple-500',
+];
 
 export const FeesPage: React.FC = () => {
   // Period states
@@ -93,7 +106,6 @@ export const FeesPage: React.FC = () => {
         const periodList = await getFeePeriods();
         setPeriods(periodList);
         if (periodList.length > 0) {
-          // Default to first period >= current month or 2026-11
           const nowKey = new Date().toISOString().substring(0, 7);
           const currentOrNov = periodList.find((p) => p.period_key === nowKey) || periodList[0];
           setSelectedPeriodKey(currentOrNov.period_key);
@@ -190,16 +202,16 @@ export const FeesPage: React.FC = () => {
   const selectedPeriod = periods.find((p) => p.period_key === selectedPeriodKey);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:space-y-8">
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold flex items-center space-x-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
+          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-2xl shadow-xl border text-sm font-semibold flex items-center space-x-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
             toastMessage.type === 'success'
               ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
               : toastMessage.type === 'error'
               ? 'bg-rose-50 text-rose-900 border-rose-200'
-              : 'bg-brand-50 text-brand-900 border-brand-200'
+              : 'bg-blue-50 text-blue-900 border-blue-200'
           }`}
         >
           {toastMessage.type === 'success' ? (
@@ -211,140 +223,161 @@ export const FeesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center space-x-2.5">
-            <span>Monthly Fees Collection</span>
-            <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-brand-50 text-brand-700 border border-brand-200">
-              {selectedPeriod?.period_name || 'Billing Period'}
-            </span>
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Granular month-by-month billing engine with strict full-payment collection and independent statuses.
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center space-x-3">
-          {/* Period Dropdown Selector */}
-          <div className="relative">
+      {/* 1. Monthly Fees Collection Hero Banner (Matches Reference 3) */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-[#0D5BE1] via-[#1A73E8] to-[#2B87FF] text-white p-6 sm:p-9 shadow-lg overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        {/* Left Column Content */}
+        <div className="relative z-10 max-w-xl space-y-3">
+          {/* Billing Period Pill Selector */}
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-black/15 backdrop-blur-md text-xs font-semibold border border-white/10 text-white shadow-2xs">
+            <Calendar className="w-3.5 h-3.5" />
             <select
               value={selectedPeriodKey}
               onChange={(e) => {
                 setSelectedPeriodKey(e.target.value);
                 setCurrentPage(1);
               }}
-              className="appearance-none bg-white border border-slate-300 hover:border-slate-400 pl-3.5 pr-8 py-2 text-xs font-bold text-slate-900 rounded-xl shadow-xs focus:ring-2 focus:ring-brand-500 cursor-pointer"
+              className="bg-transparent text-white font-semibold outline-none cursor-pointer pr-1"
             >
               {periods.map((p) => (
-                <option key={p.period_key} value={p.period_key}>
+                <option key={p.period_key} value={p.period_key} className="text-slate-900">
                   {p.period_name}
                 </option>
               ))}
             </select>
-            <Calendar className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Generate Dues Button */}
-          <button
-            type="button"
-            onClick={handleGenerateDues}
-            disabled={isGeneratingDues}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs transition-colors disabled:opacity-50"
-            title="Generate monthly dues for active eligible students"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingDues ? 'animate-spin' : ''}`} />
-            <span>{isGeneratingDues ? 'Generating...' : 'Generate Month Dues'}</span>
-          </button>
+          <h2 className="text-2xl sm:text-3.5xl font-extrabold tracking-tight">
+            Monthly Fees Collection
+          </h2>
+          <p className="text-sm sm:text-base text-blue-100 font-normal leading-relaxed">
+            Track and manage monthly fee collection with detailed insights and reports.
+          </p>
 
-          {/* Export Month Dues CSV Button */}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={isExporting}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl shadow-xs transition-colors disabled:opacity-50"
-            title="Download month-wise dues and status as CSV"
-          >
-            <Download className={`w-3.5 h-3.5 text-slate-600 ${isExporting ? 'animate-bounce' : ''}`} />
-            <span>{isExporting ? 'Exporting...' : 'Export Month CSV'}</span>
-          </button>
+          {/* Action CTAs inside banner */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleGenerateDues}
+              disabled={isGeneratingDues}
+              className="inline-flex items-center space-x-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 bg-white hover:bg-slate-50 active:bg-slate-100 rounded-xl shadow-xs transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 text-blue-600 ${isGeneratingDues ? 'animate-spin' : ''}`} />
+              <span>{isGeneratingDues ? 'Generating...' : 'Generate Month Dues'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="inline-flex items-center space-x-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-white bg-white/15 hover:bg-white/25 active:bg-white/30 border border-white/20 rounded-xl shadow-xs transition-all disabled:opacity-50"
+            >
+              <Download className={`w-4 h-4 ${isExporting ? 'animate-bounce' : ''}`} />
+              <span>{isExporting ? 'Exporting...' : 'Export Month CSV'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right 3D Wallet & Gold Coin Graphic (Matches Reference 3) */}
+        <div className="relative z-10 shrink-0 self-center md:self-auto">
+          <WalletCoinsIllustration className="w-60 h-44 sm:w-72 sm:h-48" />
         </div>
       </div>
 
-      {/* KPI Financial Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-        {/* Expected Due */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-            Expected Dues
-          </span>
-          <span className="text-lg font-black text-slate-900 block">
-            {formatCurrency(monthMetrics.totalSnapshot)}
-          </span>
-          <span className="text-[10px] text-slate-400 mt-1 block">
-            Snapshot for {selectedPeriod?.period_name}
-          </span>
+      {/* 2. 5 Fee KPI Metric Cards with Sparklines (Matches Reference 3) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+        {/* Expected Dues */}
+        <div className="relative bg-white rounded-2xl p-4.5 border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-2xs">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <SparklineCurve color="blue" className="w-20 h-9" />
+          </div>
+          <div className="mt-3">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expected Dues</p>
+            <p className="text-xl font-extrabold text-slate-800 mt-0.5">
+              {formatCurrency(monthMetrics.totalSnapshot)}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1">Snapshot for {selectedPeriod?.period_name}</p>
+          </div>
         </div>
 
-        {/* Advance Offset */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block mb-1">
-            Advance Adjusted
-          </span>
-          <span className="text-lg font-black text-amber-800 block">
-            {formatCurrency(monthMetrics.advanceOffset)}
-          </span>
-          <span className="text-[10px] text-amber-600 mt-1 block">
-            Offset from pre-payments
-          </span>
+        {/* Advance Adjusted */}
+        <div className="relative bg-white rounded-2xl p-4.5 border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-2xs">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <SparklineCurve color="amber" className="w-20 h-9" />
+          </div>
+          <div className="mt-3">
+            <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Advance Adjusted</p>
+            <p className="text-xl font-extrabold text-slate-800 mt-0.5">
+              {formatCurrency(monthMetrics.advanceOffset)}
+            </p>
+            <p className="text-[10px] text-amber-600 mt-1">Offset from pre-payments</p>
+          </div>
         </div>
 
         {/* Direct Collections */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-            Direct Collections
-          </span>
-          <span className="text-lg font-black text-emerald-800 block">
-            {formatCurrency(monthMetrics.directCollected)}
-          </span>
-          <span className="text-[10px] text-emerald-600 mt-1 block">
-            Cash / UPI / Bank payments
-          </span>
+        <div className="relative bg-white rounded-2xl p-4.5 border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-2xs">
+              <Landmark className="w-5 h-5" />
+            </div>
+            <SparklineCurve color="emerald" className="w-20 h-9" />
+          </div>
+          <div className="mt-3">
+            <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Direct Collections</p>
+            <p className="text-xl font-extrabold text-slate-800 mt-0.5">
+              {formatCurrency(monthMetrics.directCollected)}
+            </p>
+            <p className="text-[10px] text-emerald-600 mt-1">Cash / UPI / Bank payments</p>
+          </div>
         </div>
 
-        {/* Net Outstanding */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">
-            Remaining Dues
-          </span>
-          <span className="text-lg font-black text-rose-800 block">
-            {formatCurrency(monthMetrics.netOutstanding)}
-          </span>
-          <span className="text-[10px] text-rose-600 mt-1 block">
-            Pending for this month
-          </span>
+        {/* Remaining Dues */}
+        <div className="relative bg-white rounded-2xl p-4.5 border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-2xs">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <SparklineCurve color="rose" className="w-20 h-9" />
+          </div>
+          <div className="mt-3">
+            <p className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Remaining Dues</p>
+            <p className="text-xl font-extrabold text-slate-800 mt-0.5">
+              {formatCurrency(monthMetrics.netOutstanding)}
+            </p>
+            <p className="text-[10px] text-rose-500 mt-1">Pending for this month</p>
+          </div>
         </div>
 
-        {/* Unpaid Student Count */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 lg:col-span-1">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-            Unpaid Students
-          </span>
-          <span className="text-lg font-black text-slate-900 block">
-            {monthMetrics.unpaidCount}
-          </span>
-          <span className="text-[10px] text-slate-400 mt-1 block">
-            Students with balance &gt; 0
-          </span>
+        {/* Unpaid Students */}
+        <div className="relative bg-white rounded-2xl p-4.5 border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-2xs">
+              <Users className="w-5 h-5" />
+            </div>
+            <SparklineCurve color="purple" className="w-20 h-9" />
+          </div>
+          <div className="mt-3">
+            <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider">Unpaid Students</p>
+            <p className="text-xl font-extrabold text-slate-800 mt-0.5">
+              {monthMetrics.unpaidCount}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1">Students with balance &gt; 0</p>
+          </div>
         </div>
       </div>
 
-      {/* Search & Status Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      {/* 3. Search and Month Status Filter Tabs (Matches Reference 3) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4 h-4" />
+          </div>
           <input
             type="text"
             value={searchQuery}
@@ -353,47 +386,75 @@ export const FeesPage: React.FC = () => {
               setCurrentPage(1);
             }}
             placeholder="Search student by name, admission ID, or phone..."
-            className="w-full pl-9 pr-8 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-500"
+            className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-white hover:bg-slate-50/50 focus:bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all shadow-2xs"
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => {
                 setSearchQuery('');
                 setCurrentPage(1);
               }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+              aria-label="Clear search"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex items-center space-x-1.5 self-start md:self-auto bg-slate-100 p-1 rounded-xl">
-          {(['all', 'UNPAID', 'PARTIAL', 'PAID'] as const).map((st) => (
+        {/* Month Status Tabs Filter */}
+        <div className="flex items-center space-x-1.5 bg-white p-1 rounded-xl border border-slate-200/80 shadow-2xs self-start sm:self-auto">
+          {/* All Months / Period selector pill */}
+          <div className="relative">
+            <select
+              value={selectedPeriodKey}
+              onChange={(e) => {
+                setSelectedPeriodKey(e.target.value);
+                setCurrentPage(1);
+              }}
+              className={`pl-3 pr-7 py-1.5 text-xs font-bold rounded-lg transition-all appearance-none cursor-pointer ${
+                selectedStatus === 'all'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'bg-transparent text-slate-700 hover:text-slate-900'
+              }`}
+            >
+              <option value={selectedPeriodKey} className="text-slate-900">
+                All Months
+              </option>
+              {periods.map((p) => (
+                <option key={p.period_key} value={p.period_key} className="text-slate-900">
+                  {p.period_name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className={`w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${selectedStatus === 'all' ? 'text-white' : 'text-slate-500'}`} />
+          </div>
+
+          {(['UNPAID', 'PARTIAL', 'PAID'] as const).map((st) => (
             <button
               key={st}
               onClick={() => {
-                setSelectedStatus(st);
+                setSelectedStatus(st === selectedStatus ? 'all' : st);
                 setCurrentPage(1);
               }}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 selectedStatus === st
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              {st === 'all' ? 'All Months' : st}
+              {st}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Main Dues Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      {/* 4. Month-Wise Dues Table (Matches Reference 3) */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
         {isLoading ? (
           <div className="p-16 text-center">
-            <RefreshCw className="w-8 h-8 text-brand-600 animate-spin mx-auto mb-3" />
+            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
             <p className="text-xs font-bold text-slate-600">Loading {selectedPeriod?.period_name} dues...</p>
           </div>
         ) : error ? (
@@ -402,15 +463,15 @@ export const FeesPage: React.FC = () => {
             <p className="text-xs font-bold">{error}</p>
             <button
               onClick={() => loadDues()}
-              className="text-xs text-brand-600 font-bold hover:underline"
+              className="text-xs text-blue-600 font-bold hover:underline"
             >
               Try again
             </button>
           </div>
         ) : duesResult.data.length === 0 ? (
           <div className="p-16 text-center text-slate-500 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-              <Calendar className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mx-auto shadow-2xs">
+              <Calendar className="w-7 h-7" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">
               No dues found for {selectedPeriod?.period_name}
@@ -421,120 +482,147 @@ export const FeesPage: React.FC = () => {
             <button
               onClick={handleGenerateDues}
               disabled={isGeneratingDues}
-              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-xs"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3.5 h-3.5" />
               <span>Generate Dues for {selectedPeriod?.period_name}</span>
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-bold uppercase tracking-wider">
-                <tr>
-                  <th scope="col" className="py-3 px-4">Student Info</th>
-                  <th scope="col" className="py-3 px-4">Course</th>
-                  <th scope="col" className="py-3 px-4 text-right">Fee Snapshot</th>
-                  <th scope="col" className="py-3 px-4 text-right">Advance Offset</th>
-                  <th scope="col" className="py-3 px-4 text-right">Paid</th>
-                  <th scope="col" className="py-3 px-4 text-right">Remaining Balance</th>
-                  <th scope="col" className="py-3 px-4 text-center">Month Status</th>
-                  <th scope="col" className="py-3 px-4 text-center">Actions</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#EEF4FF] border-b border-blue-100/60 text-[11px] font-bold text-[#10234F] tracking-wide">
+                  <th scope="col" className="py-3.5 px-4">STUDENT INFO</th>
+                  <th scope="col" className="py-3.5 px-4">COURSE</th>
+                  <th scope="col" className="py-3.5 px-4 text-right">FEE SNAPSHOT</th>
+                  <th scope="col" className="py-3.5 px-4 text-right">ADVANCE OFFSET</th>
+                  <th scope="col" className="py-3.5 px-4 text-right">PAID</th>
+                  <th scope="col" className="py-3.5 px-4 text-right">REMAINING BALANCE</th>
+                  <th scope="col" className="py-3.5 px-4 text-center">MONTH STATUS</th>
+                  <th scope="col" className="py-3.5 px-4 text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {duesResult.data.map((due) => (
-                  <tr key={due.due_id} className="hover:bg-slate-50/80 transition-colors">
-                    {/* Student Info */}
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-slate-900 block">{due.student_name}</span>
-                      <span className="font-mono text-[11px] text-slate-500 block">ID: {due.admission_id}</span>
-                      <span className="text-[11px] text-slate-400">{due.student_phone}</span>
-                    </td>
+                {duesResult.data.map((due, idx) => {
+                  const grad = avatarGradients[idx % avatarGradients.length];
+                  const initial = due.student_name ? due.student_name.charAt(0).toUpperCase() : '?';
 
-                    {/* Course */}
-                    <td className="py-3.5 px-4 font-medium text-slate-700">
-                      {due.student_course}
-                    </td>
+                  return (
+                    <tr key={due.due_id} className="hover:bg-blue-50/30 transition-colors">
+                      {/* Student Info with Avatar */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${grad} text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0`}>
+                            {initial}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-800 text-sm block">
+                              {due.student_name}
+                            </span>
+                            <div className="flex items-center space-x-2 text-[11px] text-slate-400">
+                              <span className="font-mono font-semibold text-blue-600">ID: {due.admission_id}</span>
+                              <span>•</span>
+                              <span>{due.student_phone}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-                    {/* Fee Snapshot */}
-                    <td className="py-3.5 px-4 text-right font-semibold text-slate-900">
-                      {formatCurrency(due.fee_snapshot)}
-                    </td>
+                      {/* Course Pill */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100/60">
+                          {due.student_course}
+                        </span>
+                      </td>
 
-                    {/* Advance Offset */}
-                    <td className="py-3.5 px-4 text-right font-semibold text-amber-700">
-                      {due.advance_applied_amount > 0 ? formatCurrency(due.advance_applied_amount) : '—'}
-                    </td>
+                      {/* Fee Snapshot */}
+                      <td className="py-4 px-4 text-right font-bold text-slate-800 whitespace-nowrap text-sm">
+                        {formatCurrency(due.fee_snapshot)}
+                      </td>
 
-                    {/* Paid Amount */}
-                    <td className="py-3.5 px-4 text-right font-semibold text-emerald-700">
-                      {due.normal_paid_amount > 0 ? formatCurrency(due.normal_paid_amount) : '—'}
-                    </td>
+                      {/* Advance Offset */}
+                      <td className="py-4 px-4 text-right font-semibold text-amber-600 whitespace-nowrap">
+                        {due.advance_applied_amount > 0 ? formatCurrency(due.advance_applied_amount) : '—'}
+                      </td>
 
-                    {/* Remaining Balance */}
-                    <td className="py-3.5 px-4 text-right font-black">
-                      <span className={due.balance_remaining > 0 ? 'text-rose-600' : 'text-slate-400'}>
-                        {formatCurrency(due.balance_remaining)}
-                      </span>
-                    </td>
+                      {/* Paid Amount */}
+                      <td className="py-4 px-4 text-right font-bold text-emerald-600 whitespace-nowrap text-sm">
+                        {due.normal_paid_amount > 0 ? formatCurrency(due.normal_paid_amount) : '—'}
+                      </td>
 
-                    {/* Status Badge (Independent Status) */}
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`inline-block px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider ${
-                          due.status === 'PAID'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : due.status === 'PARTIAL'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {due.status}
-                      </span>
-                    </td>
+                      {/* Remaining Balance */}
+                      <td className="py-4 px-4 text-right font-extrabold whitespace-nowrap text-sm">
+                        <span className={due.balance_remaining > 0 ? 'text-rose-600' : 'text-slate-400'}>
+                          {formatCurrency(due.balance_remaining)}
+                        </span>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center space-x-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setCollectingForDue(due)}
-                          disabled={due.status === 'PAID' || due.balance_remaining <= 0}
-                          className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-xs"
-                          title="Collect exact full remaining balance for this month"
+                      {/* Month Status Pill Badge */}
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${
+                            due.status === 'PAID'
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                              : due.status === 'PARTIAL'
+                              ? 'bg-amber-50 text-amber-700 border-amber-100'
+                              : 'bg-rose-50 text-rose-700 border-rose-100'
+                          }`}
                         >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          <span>Collect</span>
-                        </button>
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                              due.status === 'PAID'
+                                ? 'bg-emerald-500'
+                                : due.status === 'PARTIAL'
+                                ? 'bg-amber-500'
+                                : 'bg-rose-500'
+                            }`}
+                          />
+                          {due.status}
+                        </span>
+                      </td>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Synthesize student summary for legacy history modal
-                            setHistoryStudentSummary({
-                              id: due.student_id,
-                              admission_id: due.admission_id,
-                              name: due.student_name,
-                              phone: due.student_phone,
-                              course: due.student_course,
-                              joining_date: '2026-10-01',
-                              status: 'active',
-                              total_fee: due.fee_snapshot,
-                              total_paid: due.normal_paid_amount + due.advance_applied_amount,
-                              balance_due: due.balance_remaining,
-                              fee_status: due.status,
-                            });
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          title="View Payment History"
-                        >
-                          <History className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      {/* Actions */}
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setCollectingForDue(due)}
+                            disabled={due.status === 'PAID' || due.balance_remaining <= 0}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs"
+                            title="Collect exact full remaining balance for this month"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            <span>Collect</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setHistoryStudentSummary({
+                                id: due.student_id,
+                                admission_id: due.admission_id,
+                                name: due.student_name,
+                                phone: due.student_phone,
+                                course: due.student_course,
+                                joining_date: '2026-10-01',
+                                status: 'active',
+                                total_fee: due.fee_snapshot,
+                                total_paid: due.normal_paid_amount + due.advance_applied_amount,
+                                balance_due: due.balance_remaining,
+                                fee_status: due.status,
+                              });
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                            title="View Payment History"
+                          >
+                            <History className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -542,28 +630,32 @@ export const FeesPage: React.FC = () => {
 
         {/* Pagination Footer */}
         {duesResult.totalPages > 1 && (
-          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-            <span>
-              Showing {(currentPage - 1) * 15 + 1} to{' '}
-              {Math.min(currentPage * 15, duesResult.count)} of {duesResult.count} dues
-            </span>
-            <div className="flex items-center space-x-2">
+          <div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <div>
+              Showing <span className="font-bold text-slate-800">{(currentPage - 1) * 15 + 1}</span> to{' '}
+              <span className="font-bold text-slate-800">{Math.min(currentPage * 15, duesResult.count)}</span> of{' '}
+              <span className="font-bold text-slate-800">{duesResult.count}</span> students
+            </div>
+
+            <div className="flex items-center space-x-1.5">
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage <= 1}
-                className="p-1.5 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-40"
+                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-slate-600"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="font-bold text-slate-700">
-                Page {currentPage} of {duesResult.totalPages}
+
+              <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-2xs">
+                {currentPage}
               </span>
+
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(p + 1, duesResult.totalPages))}
                 disabled={currentPage >= duesResult.totalPages}
-                className="p-1.5 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-40"
+                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-slate-600"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

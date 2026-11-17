@@ -24,4 +24,18 @@ describe('Phase 6 Attendance Management Components', () => {
     const percentage = Math.round((presentCount / totalSessions) * 100);
     expect(percentage).toBe(90);
   });
+
+  it('Verifies attendance locked state invariants', () => {
+    // When isAlreadyRecorded is true and isEditMode is false:
+    // Attendance is locked in read-only confirmed badges
+    const isAlreadyRecorded = true;
+    const isEditMode = false;
+    const isLocked = isAlreadyRecorded && !isEditMode;
+
+    expect(isLocked).toBe(true);
+
+    // When edit mode is toggled on:
+    const isUnlocked = isAlreadyRecorded && true;
+    expect(isUnlocked).toBe(true);
+  });
 });

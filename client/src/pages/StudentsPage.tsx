@@ -8,6 +8,7 @@ import { StudentTable } from '../components/students/StudentTable';
 import { AddStudentModal } from '../components/students/AddStudentModal';
 import { EditStudentModal } from '../components/students/EditStudentModal';
 import { DeleteStudentModal } from '../components/students/DeleteStudentModal';
+import { BooksGraduationCapIllustration } from '../components/common/illustrations/BooksGraduationCapIllustration';
 import {
   getStudents,
   getDistinctCourses,
@@ -15,13 +16,13 @@ import {
 } from '../services/students';
 import type { StudentStatus } from '../types/database';
 import type { PaginatedResult } from '../types/common';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Users } from 'lucide-react';
 
 export const StudentsPage: React.FC = () => {
   // Query & Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<StudentStatus | 'all'>('active');
+  const [selectedStatus, setSelectedStatus] = useState<StudentStatus | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Data states
@@ -120,16 +121,24 @@ export const StudentsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Student Admissions & Directory
+    <div className="space-y-6">
+      {/* Hero Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-[#0D5BE1] via-[#1A73E8] to-[#2B87FF] text-white p-6 sm:p-9 shadow-lg overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="relative z-10 max-w-xl space-y-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-black/15 backdrop-blur-md text-xs font-semibold text-white">
+            <Users className="w-3.5 h-3.5" />
+            <span>Admissions & Student Registry</span>
+          </div>
+          <h2 className="text-2xl sm:text-3.5xl font-extrabold tracking-tight">
+            Students Management
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Manage student enrollments with manual Admission IDs and course tracking
+          <p className="text-sm sm:text-base text-blue-100 font-normal leading-relaxed">
+            View, filter, admit, and manage active student records and courses.
           </p>
+        </div>
+
+        <div className="relative z-10 shrink-0 self-center md:self-auto">
+          <BooksGraduationCapIllustration className="w-56 h-40 sm:w-64 sm:h-44" />
         </div>
       </div>
 
@@ -166,17 +175,19 @@ export const StudentsPage: React.FC = () => {
       )}
 
       {/* Filters & Actions Toolbar */}
-      <StudentFilters
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        selectedCourse={selectedCourse}
-        onCourseChange={handleCourseChange}
-        selectedStatus={selectedStatus}
-        onStatusChange={handleStatusChange}
-        coursesList={existingCourses}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
-        totalStudents={studentsResult?.count || 0}
-      />
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <StudentFilters
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          selectedCourse={selectedCourse}
+          onCourseChange={handleCourseChange}
+          selectedStatus={selectedStatus}
+          onStatusChange={handleStatusChange}
+          coursesList={existingCourses}
+          onOpenAddModal={() => setIsAddModalOpen(true)}
+          totalStudents={studentsResult?.count || 0}
+        />
+      </div>
 
       {/* Student List Table */}
       <StudentTable

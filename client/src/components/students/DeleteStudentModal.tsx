@@ -50,18 +50,18 @@ export const DeleteStudentModal: React.FC<DeleteStudentModalProps> = ({
       aria-modal="true"
       aria-labelledby="delete-student-title"
     >
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
-              <Trash2 className="w-4 h-4" />
+        <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-xs">
+              <Trash2 className="w-5 h-5" />
             </div>
             <div>
               <h3 id="delete-student-title" className="text-base font-bold text-slate-900 leading-tight">
                 Delete Student Record
               </h3>
-              <p className="text-xs text-rose-700 font-medium">Data Safety Check</p>
+              <p className="text-xs text-rose-600 font-medium">Data Safety Check</p>
             </div>
           </div>
 
@@ -69,7 +69,7 @@ export const DeleteStudentModal: React.FC<DeleteStudentModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

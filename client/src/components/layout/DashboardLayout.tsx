@@ -11,7 +11,7 @@ export const DashboardLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-[#F3F7FE] flex">
       {/* Sidebar navigation */}
       <Sidebar
         isOpen={isMobileMenuOpen}
@@ -31,4 +31,3 @@ export const DashboardLayout: React.FC = () => {
     </div>
   );
 };
-

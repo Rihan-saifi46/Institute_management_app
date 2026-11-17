@@ -3,7 +3,7 @@
 // Enforces Owner-Approved Rule: Exact Full Payment Only (Partial & Excess Prohibited)
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CreditCard, AlertCircle, Loader2, CheckCircle2, Lock, Info } from 'lucide-react';
 import { collectMonthlyFee, type MonthlyDueStatusRecord } from '../../services/fees';
 import type { PaymentMode } from '../../types/database';
@@ -30,16 +30,6 @@ export const RecordMonthlyPaymentModal: React.FC<RecordMonthlyPaymentModalProps>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!isOpen || !dueRecord) return null;
-
-  const formatCurrency = (amt: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(amt);
-  };
-
   const handleClose = () => {
     if (!isSubmitting) {
       setErrorMessage(null);
@@ -48,6 +38,28 @@ export const RecordMonthlyPaymentModal: React.FC<RecordMonthlyPaymentModalProps>
       setPaymentMode('cash');
       onClose();
     }
+  };
+
+  // Listen for Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isSubmitting) {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isSubmitting]);
+
+  if (!isOpen || !dueRecord) return null;
+
+  const formatCurrency = (amt: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amt);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,24 +111,27 @@ export const RecordMonthlyPaymentModal: React.FC<RecordMonthlyPaymentModalProps>
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isSubmitting) handleClose();
+      }}
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-headline"
     >
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-600/30 flex items-center justify-center text-brand-400">
-              <CreditCard className="w-4 h-4" />
+      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[88vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        {/* Header - Sticky shrink-0 */}
+        <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 text-white flex items-center justify-center shadow-glow-blue shrink-0">
+              <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <h3 id="modal-headline" className="text-base font-bold text-white leading-tight">
+              <h3 id="modal-headline" className="text-base font-bold text-slate-900 leading-tight">
                 Collect Monthly Fee
               </h3>
               <p className="text-xs text-slate-400 font-medium">
-                Billing Period: <span className="text-brand-300 font-semibold">{dueRecord.period_name}</span>
+                Billing Period: <span className="text-blue-600 font-semibold">{dueRecord.period_name}</span>
               </p>
             </div>
           </div>
@@ -124,16 +139,19 @@ export const RecordMonthlyPaymentModal: React.FC<RecordMonthlyPaymentModalProps>
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50"
+            title="Close (Esc)"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Error Banner */}
+        {/* Form Element wrapping scrollable content and pinned footer */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+          {/* Scrollable Form Body */}
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+            {/* Error Banner */}
           {errorMessage && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start space-x-2.5 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -269,37 +287,38 @@ export const RecordMonthlyPaymentModal: React.FC<RecordMonthlyPaymentModalProps>
               />
             </div>
           </div>
+        </div>
 
-          {/* Submit Actions */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end space-x-3">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || dueRecord.balance_remaining <= 0}
-              className="inline-flex items-center space-x-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Processing Payment...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Collect {formatCurrency(dueRecord.balance_remaining)} & Print</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Sticky Actions Footer */}
+        <div className="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-end space-x-3 shrink-0">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || dueRecord.balance_remaining <= 0}
+            className="inline-flex items-center space-x-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-glow-blue transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Processing Payment...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Collect {formatCurrency(dueRecord.balance_remaining)} & Print</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
-  );
+  </div>
+);
 };

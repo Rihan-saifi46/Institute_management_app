@@ -1,5 +1,5 @@
 // ==============================================================================
-// Z Institute Management System - Daily Batch Attendance Page
+// Z Institute Management System - Daily Batch Attendance Page (Matches Reference 1)
 // ==============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -7,6 +7,7 @@ import { AttendanceDateBar } from '../components/attendance/AttendanceDateBar';
 import { BatchAttendanceSheet } from '../components/attendance/BatchAttendanceSheet';
 import { AttendanceReviewModal } from '../components/attendance/AttendanceReviewModal';
 import { StudentAttendanceHistoryModal } from '../components/attendance/StudentAttendanceHistoryModal';
+import { ClipboardAttendanceIllustration } from '../components/common/illustrations/ClipboardAttendanceIllustration';
 import {
   getStudents,
   getDistinctCourses,
@@ -18,7 +19,7 @@ import {
   type BatchAttendanceItem,
 } from '../services/attendance';
 import type { AttendanceStatus } from '../types/database';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, CalendarCheck } from 'lucide-react';
 
 export const AttendancePage: React.FC = () => {
   // Today's date in YYYY-MM-DD
@@ -29,6 +30,7 @@ export const AttendancePage: React.FC = () => {
   const [coursesList, setCoursesList] = useState<string[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [isAlreadyRecorded, setIsAlreadyRecorded] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export const AttendancePage: React.FC = () => {
     }, 4000);
   };
 
-  // Load active students and distinct courses once
+  // Load active students and distinct courses
   const loadInitialData = useCallback(async () => {
     try {
       const [studentsRes, coursesRes] = await Promise.all([
@@ -69,17 +71,16 @@ export const AttendancePage: React.FC = () => {
   const loadAttendanceForDate = useCallback(async (date: string, students: Student[]) => {
     setIsLoading(true);
     setError(null);
+    setIsEditMode(false);
     try {
       const existingRecords = await getAttendanceForDate(date);
 
       if (existingRecords.length > 0) {
-        // Records already exist: map each student to their database status
         const map: Record<string, AttendanceStatus> = {};
         for (const rec of existingRecords) {
           map[rec.student_id] = rec.status;
         }
 
-        // For any student who doesn't have a record yet, default to present
         for (const s of students) {
           if (!map[s.id]) {
             map[s.id] = 'present';
@@ -89,7 +90,6 @@ export const AttendancePage: React.FC = () => {
         setAttendanceMap(map);
         setIsAlreadyRecorded(true);
       } else {
-        // No records on database for this date yet: DEFAULT ALL ACTIVE STUDENTS TO PRESENT
         const defaultMap: Record<string, AttendanceStatus> = {};
         for (const s of students) {
           defaultMap[s.id] = 'present';
@@ -149,6 +149,7 @@ export const AttendancePage: React.FC = () => {
       const savedCount = await saveBatchAttendance(selectedDate, recordsToSave);
       setIsReviewModalOpen(false);
       setIsAlreadyRecorded(true);
+      setIsEditMode(false);
       showToast(`Successfully saved attendance for ${savedCount} students on ${selectedDate}!`);
     } catch (err: any) {
       console.error('[AttendancePage] Error saving attendance:', err);
@@ -164,22 +165,31 @@ export const AttendancePage: React.FC = () => {
   const absentCount = activeStudents.filter((s) => attendanceMap[s.id] === 'absent').length;
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+    <div className="space-y-6 sm:space-y-8">
+      {/* 1. Daily Batch Attendance Hero Banner (Matches Reference 1) */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-[#0D5BE1] via-[#1A73E8] to-[#2B87FF] text-white p-6 sm:p-9 shadow-lg overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="relative z-10 max-w-xl space-y-3">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-black/15 backdrop-blur-md text-xs font-semibold border border-white/10 text-white shadow-2xs">
+            <CalendarCheck className="w-3.5 h-3.5" />
+            <span>Real-time Attendance Tracking</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3.5xl font-extrabold tracking-tight">
             Daily Batch Attendance
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Mark student class attendance in seconds with batch defaulting and atomic upserts
+          <p className="text-sm sm:text-base text-blue-100 font-normal leading-relaxed">
+            Mark student class attendance in seconds with batch filtering and atomic updates.
           </p>
+        </div>
+
+        <div className="relative z-10 shrink-0 self-center md:self-auto">
+          <ClipboardAttendanceIllustration className="w-60 h-44 sm:w-72 sm:h-48" />
         </div>
       </div>
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center space-x-2.5 text-xs font-semibold text-emerald-800 shadow-xs">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center space-x-2.5 text-xs font-semibold text-emerald-800 shadow-xs">
           <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
           <span>{toastMessage}</span>
         </div>
@@ -187,7 +197,7 @@ export const AttendancePage: React.FC = () => {
 
       {/* Error alert */}
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center justify-between">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-center justify-between">
           <span>{error}</span>
           <button
             type="button"
@@ -199,7 +209,7 @@ export const AttendancePage: React.FC = () => {
         </div>
       )}
 
-      {/* Date Picker & Live Counters Bar */}
+      {/* 2. Date Picker & Live Metric Counters Bar (Matches Reference 1) */}
       <AttendanceDateBar
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
@@ -211,7 +221,7 @@ export const AttendancePage: React.FC = () => {
         onStatusFilterChange={setStatusFilter}
       />
 
-      {/* Interactive Batch Attendance Table */}
+      {/* 3. Interactive Batch Attendance Table (Matches Reference 1) */}
       <BatchAttendanceSheet
         students={activeStudents}
         attendanceMap={attendanceMap}
@@ -226,6 +236,9 @@ export const AttendancePage: React.FC = () => {
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
         onViewStudentHistory={(student) => setHistoryStudent(student)}
+        isAlreadyRecorded={isAlreadyRecorded}
+        isEditMode={isEditMode}
+        onToggleEditMode={setIsEditMode}
       />
 
       {/* Pre-Submission Review Modal */}

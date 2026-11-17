@@ -123,6 +123,9 @@ export async function createStudent(
   if (!cleanPayload.phone) {
     throw new Error('Contact phone number is required');
   }
+  if (!/^[6-9]\d{9}$/.test(cleanPayload.phone)) {
+    throw new Error('Phone number must be a valid 10-digit mobile number starting with 6, 7, 8, or 9');
+  }
   if (cleanPayload.total_fee < 0) {
     throw new Error('Total course fee cannot be negative');
   }
@@ -160,6 +163,9 @@ export async function updateStudent(
   }
   if (typeof updatePayload.phone === 'string') {
     updatePayload.phone = updatePayload.phone.trim();
+    if (updatePayload.phone && !/^[6-9]\d{9}$/.test(updatePayload.phone)) {
+      throw new Error('Phone number must be a valid 10-digit mobile number starting with 6, 7, 8, or 9');
+    }
   }
   if (typeof updatePayload.course === 'string') {
     updatePayload.course = updatePayload.course.trim();
